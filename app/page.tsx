@@ -3,12 +3,12 @@ import { HoleBackground } from "@/components/animate-ui/components/backgrounds/h
 import { BlueTitle, GrayTitle, SectionHeading, SectionLabel } from "@/components/reusables";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { SignInButton, useAuth } from "@clerk/nextjs";
+import { PricingTable, SignInButton, useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils"
 import { FEATURES, PLACEHOLDERS, STEPS, SUGGESTIONS } from "@/lib/data";
-import { ArrowRight, Zap } from "lucide-react";
+import { ArrowRight, ChevronRight, Zap } from "lucide-react";
 
 export default function Home() {
     const { isSignedIn } = useAuth();
@@ -321,6 +321,68 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+
+      <section className="px-4 pb-32">
+        <div className="mx-auto mb-14 max-w-3xl text-center">
+          <SectionLabel>Simple Pricing</SectionLabel>
+          <SectionHeading gray="Start free" blue="scale when ready." />
+
+          <p className="mx-auto mt-4 max-w-sm text-sm text-white/35">
+            No credit card required. Upgrade or downgrade anytime.
+          </p>
+        </div>
+
+        <div className="mx-auto max-w-5xl">
+          <PricingTable
+            checkoutProps={{
+              appearance: {
+                elements: {
+                  drawerRoot: {
+                    zIndex: 2000,
+                  }
+                }
+              }
+            }}
+        />
+        </div>
+      </section>
+
+          <section className="relative mx-auto mb-32 max-w-5xl overflow-hidden rounded-2xl border border-white/8 px-10 py-24 text-center">
+
+          <HoleBackground
+          strokeColor="rgba(255,255,255,0.05)" // blur
+          className="absolute inset-0 h-full w-full"
+          style={{
+            maskImage:
+              "linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)",
+            WebkitMaskImage:
+              "linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)",
+          }}
+        />
+
+        <SectionHeading gray="Start building, " blue="for free." />
+
+        <p className="mb-8 text-sm leading-relaxed text-white/40">
+          Get 10 free generations on sign up. No credit card required.
+          <br />
+          Upgrade when you&apos;re ready.
+        </p>
+
+        <SignInButton mode="modal">
+          <Button
+            size="lg"
+            className="relative h-11 rounded-full bg-white px-8"
+          >
+            Get started free
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </SignInButton>
+          </section>
+
+          <footer className="relative z-10 border-t border-white/7 py-12 mx-auto px-6 flex flex-wrap items-center justify-center text-stone-400">
+        Made with ❤️ by gthm
+      </footer>
 
 
     </main>
