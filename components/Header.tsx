@@ -4,6 +4,8 @@ import React from 'react'
 import { ArrowRight, Zap } from 'lucide-react'
 import { Show, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
+import PricingModal from './PricingModal'
+
 
 const Header = () => {
   return <header className='w-full fixed top-0 left-0 z-50 h-16 border-b border-white/6 bg-white/7 backdrop-blur-md'>
@@ -22,10 +24,12 @@ const Header = () => {
             <Show when="signed-in">
             <Link href={"/projects"} className='text-[13px] font-medium text-white/40 transition-colors hover:text-white/80'>Projects</Link>
 
-<span className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 text-xs text-white/70">
-    <Zap className="h-3 w-3 fill-white/70" />
-    3 / 40 credits
-</span>
+            <PricingModal>
+            <span className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 text-xs text-white/70">
+                <Zap className="h-3 w-3 fill-white/70" />
+                3 / 40 credits
+            </span>
+            </PricingModal>
               <UserButton />
             </Show> 
            
