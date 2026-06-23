@@ -120,7 +120,7 @@ const PLACEHOLDER_FILES = {
     </TabsList>
   </div>
 
-  <div className="relative flex-1 overflow-hidden">
+  <div className="relative flex-1 overflow-hidden ">
 
   <SandpackLayout
           style={{
@@ -144,7 +144,7 @@ const PLACEHOLDER_FILES = {
             <TabsContent 
             value="code"
             keepMounted
-            className="mt-0 h-full w-full"
+            className="mt-0 flex h-full w-full"
             >
             <SandpackFileExplorer
                 style={{
