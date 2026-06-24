@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
   }
 
   const user = await db.user.findUnique({
-    where: { id: userId, clerkId },
+    where: { clerkId },
     select: { id: true, credits: true },
   });
 
