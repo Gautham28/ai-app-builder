@@ -4,6 +4,8 @@ import { GoogleGenAI } from "@google/genai";
 import { db } from "@/lib/prisma";
 import { CREDIT_COST_PER_GENERATION } from "@/lib/constants";
 import type { Message, FileData } from "@/types/workspace";
+import { detectPromptInjection } from "@arcjet/next";
+import { aj } from "@/lib/arcjet";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
@@ -116,6 +118,27 @@ export async function POST(request: NextRequest) {
   if (!messages?.length) {
     return Response.json({ message: "No messages provided" }, { status: 400 });
   }
+
+  const arcjetReq = new Request(request.url, {
+    method: request.method,
+    headers: request.headers,
+    body: JSON.stringify(body),
+  });
+
+  const lastUserMessage = 
+    [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+    const decision = await aj.protect(arcjetReq, {
+      requested: 1,
+      userId: clerkId,
+      detectPromptInjectionMessage: lastUserMessage,
+    });
+    if (decision.isDenied()){
+      return Response.json(
+        { message: decision.reason?.type ?? "Request blocked"},
+        { status: 429 },
+      );
+    }
+    
 
   const user = await db.user.findUnique({
     where: { clerkId },
