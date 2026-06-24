@@ -101,6 +101,7 @@ const WorkspaceClient = ({ initialPrompt, userCredits, workspace, userId, userPl
 
           try {
             const conversationHistory = [...currentMessages, userMessage];
+            const abortController = new AbortController();
     
             const res = await fetch("/api/gen-ai-code", {
               method: "POST",
@@ -133,7 +134,7 @@ const WorkspaceClient = ({ initialPrompt, userCredits, workspace, userId, userPl
                 if (done) break;
 
                 buffer += decoder.decode(value, { stream: true});
-                const lines = buffer.split("/n/n");
+                const lines = buffer.split("\n\n");
                 buffer = lines.pop() ?? "";
 
                 for (const line of lines) {

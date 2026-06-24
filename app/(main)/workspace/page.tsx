@@ -1,3 +1,4 @@
+import { getWorkspaceById, getWorkspaceUser } from "@/actions/workspace";
 import WorkspaceClient from "@/components/WorkspaceClient";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
@@ -13,13 +14,18 @@ const WorkspacePage = async ({ searchParams } : WorkspacePageProps) => {
 
     const { prompt, id } = await searchParams;
 
+    const user = await getWorkspaceUser();
+
     let workspace = null;
+    if (id) {
+      workspace = await getWorkspaceById(id, user.id);
+    }
 
     return (
     <WorkspaceClient
         initialPrompt={prompt ?? null}
         userCredits={user.credits}
-        userId={userId}
+        userId={user.id}
         userPlan={user.plan}
         workspace={workspace}
     />
