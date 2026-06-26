@@ -220,6 +220,11 @@ const WorkspaceClient = ({ initialPrompt, userCredits, workspace, userId, userPl
             statusLog={statusLog}
             onFilePatch={handleFilePatch}
             isImproving={isImproving}
+            onFixError={(error) =>
+              handleGenerate(
+                `There is an error in the preview:\n\n\`\`\`\n${error}\n\`\`\`\n\nPlease fix it.`
+              )
+            }
             />
         </div>
     )
