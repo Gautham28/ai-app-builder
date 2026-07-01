@@ -9,8 +9,9 @@ import Image from "next/image";
 import { ArrowUp, Check, Loader2, Paperclip, Sparkles, Square, Wand2, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { useUser } from "@clerk/nextjs";
-import ReactMarkdown from "react-markdown"
-import{ createClient } from "@supabase/supabase-js";
+import ReactMarkdown from "react-markdown";
+import { createClient } from "@supabase/supabase-js";
+import { toast } from "sonner";
 
 interface ChatPanelProps {
   messages: Message[];
@@ -111,12 +112,18 @@ const ChatPanel = ({
       e.preventDefault();
       handleSubmit();
     }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    setIsUploading(true);
     try {
-      const ext = File.name.split(".").pop();
+      const ext = file.name.split(".").pop();
       const path = `${userId}/${workspaceId ?? "new"}/${Date.now()}.${ext}`;
       const { error } = await supabase.storage
         .from("workspace-images")
-        .upload(path, File, { upsert: true });
+        .upload(path, file, { upsert: true });
 
       if (error) throw error;
 
@@ -124,20 +131,13 @@ const ChatPanel = ({
         .from("workspace-images")
         .getPublicUrl(path);
       setPendingImageUrl(data.publicUrl);
-    } catch (error){
+    } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       toast.error(message);
     } finally {
       setIsUploading(false);
       if (fileRef.current) fileRef.current.value = "";
     }
-  };
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !file.type.startsWith("image/")) return;
-    setIsUploading(true);
   };
 
   const lastMsg = messages[messages.length - 1];
@@ -248,15 +248,16 @@ const ChatPanel = ({
                           </p>
                         </div>
                       ) : (
-                  <div className="prose prose-sm prose-invert max-w-none wrap-break-word text-[13px] leading-relaxed text-white/70 [&_code]:rounded [&_code]:bg-white/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-blue-300/80 [&_code]:text-xs [&_code]:break-all [&_li]:my-0.5 [&_p]:my-1 [&_pre]:overflow-x-auto! [&_pre]:whitespace-pre-wrap! [&_ul]:my-1">
-                    <ReactMarkdown>{msg.content}</ReactMarkdown>
-                    </div>
+                        <div className="prose prose-sm prose-invert max-w-none wrap-break-word text-[13px] leading-relaxed text-white/70 [&_code]:rounded [&_code]:bg-white/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-blue-300/80 [&_code]:text-xs [&_code]:break-all [&_li]:my-0.5 [&_p]:my-1 [&_pre]:overflow-x-auto! [&_pre]:whitespace-pre-wrap! [&_ul]:my-1">
+                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        </div>
+                      )}
+                  </div>
                 </div>
               )}
-              </div>
-
             </div>
-          )})}
+          );
+          })}
         
 
         {isGenerating && (
@@ -312,7 +313,7 @@ const ChatPanel = ({
         </div>
       )}
 
-<div className="border-t border-white/6 p-3">
+      <div className="border-t border-white/6 p-3">
         {pendingImageUrl && (
           <div className="relative mb-2 w-fit">
             <img
@@ -329,16 +330,14 @@ const ChatPanel = ({
           </div>
         )}
 
-
-        <div className="border-t border-white/6 p-3">
-            <div
-                className={cn(
-                    "rounded-xl border bg-white/4 transition-colors",
-                    isGenerating || isImproving || noCredits
-                    ? "border-white/4 opacity-60"
-                    : "border-white/8 hover:border-white/12",
-                )}
-            >
+        <div
+          className={cn(
+            "rounded-xl border bg-white/4 transition-colors",
+            isGenerating || isImproving || noCredits
+              ? "border-white/4 opacity-60"
+              : "border-white/8 hover:border-white/12",
+          )}
+        >
                 <textarea
                     ref={textareaRef}
                     value={input}
@@ -414,7 +413,7 @@ const ChatPanel = ({
             ? "Click ■ to stop generation"
             : "⏎ to send · Shift+⏎ for new line"}
         </p>
-        </div>
+      </div>
     </div>
   );
 };

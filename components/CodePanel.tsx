@@ -204,8 +204,8 @@ const PLACEHOLDER_FILES = {
         : "forge-app.zip";
       a.click();
       URL.revokeObjectURL(url);
-      }catch (error) {
-        console.error("Export failed:", err);
+      } catch (error) {
+        console.error("Export failed:", error);
       } finally {
         setIsExporting(false);
       }
@@ -247,11 +247,6 @@ const PLACEHOLDER_FILES = {
       });
       return () => unsubscribeRef.current?.();
     }, [listen]);
-
-
-    useEffect(() => {
-      if (isGenerating) setPreviewError(null);
-    }, [isGenerating]);
 
     const prevFilesRef=useRef<Record<string, {code: string}>>({});
     useEffect(()=>{
@@ -352,9 +347,6 @@ const PLACEHOLDER_FILES = {
             )}
             Download
           </Button>
-        </div>
-      </div>
-
   </div>
 
   <div className="relative flex-1 overflow-hidden h-full">
@@ -418,11 +410,10 @@ const PLACEHOLDER_FILES = {
 
             </TabsContent>
         </SandpackLayout>
-        
-            
-  </div>
-  <div className="absolute inset-x-0 -bottom-3 z-20 border-t border-red-500/20 bg-red-950/99 p-4 pb-6">
-        <div className="flex items-center gap-2.5">
+
+        {previewError && !isGenerating && !isImproving && (
+          <div className="absolute inset-x-0 bottom-0 z-20 border-t border-red-500/20 bg-red-950/99 p-4 pb-6">
+            <div className="flex items-center gap-2.5">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-400/70" />
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-medium text-red-400/80">
@@ -440,7 +431,10 @@ const PLACEHOLDER_FILES = {
                 <Bot className="h-3 w-3" />
                 Fix with AI
               </Button>
-        </div>
+            </div>
+          </div>
+        )}
+  </div>
 </Tabs>
     )
   }
