@@ -12,10 +12,11 @@ import {
   } from "@codesandbox/sandpack-react";
   import {dracula} from "@codesandbox/sandpack-themes";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { AlertTriangle, ArrowUp, Bot, Code2, Eye, Loader2, Wand2 } from "lucide-react";
+import { AlertTriangle, ArrowUp, Bot, Code2, Download, Eye, Loader2, Wand2 } from "lucide-react";
 import { RingLoader } from "react-spinners";
 import { Button } from "./ui/button";
 import PricingModal from "./PricingModal";
+import JSZip from "jszip";
 
 const PLACEHOLDER_FILES = {
     "/App.js": {
@@ -105,8 +106,110 @@ const PLACEHOLDER_FILES = {
     const [previewError, setPreviewError] = useState<string | null>(null);
     const unsubscribeRef = useRef<(() => void) | null>(null);
 
+    const[isExporting, setIsExporting] = useState(false);
+
     const [improveInput, setImproveInput] = useState("");
     const [showImproveInput, setShowImproveInput] = useState(false);
+
+    const handleExportZip = async () => {
+      if (isExporting) return;
+      setIsExporting(true);
+
+      try {
+        const filesToZip =
+        Object.keys(sandpack.files).length > 0
+        ? sandpack.files
+        : (fileData?.files ?? {});
+
+        const dependencies = {
+          ...BASE_DEPENDENCIES,
+          ...(fileData?.dependencies ?? {}),
+        };
+
+        const zip = new JSZip();
+
+        zip.file(
+          "package.json",
+          JSON.stringify(
+            {
+              name: appTitle ?? "ai-app",
+              version: "1.0.0",
+              private: true,
+              dependencies: {
+                react: "^18.2.0",
+                "react-dom" : "^18.2.0",
+                "react-scripts": "5.0.1",
+                ...dependencies,
+              },
+              scripts: {
+                start: "react-scripts start",
+                build: "react-scripts build"
+              },
+              browserlist: {
+                production: [">0.2%", "not dead", "not op_mini all"],
+                development: ["last 1 chrome version"],
+              }
+            },
+            null,
+            2,
+          ),
+        );
+
+        zip.file(
+          "public/index.html",
+          `<!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <title>Forge App</title>
+      <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body>
+      <div id="root"></div>
+    </body>
+  </html>`
+        );
+
+        for (const [filePath, fileObj] of Object.entries(filesToZip)) {
+          const code =
+            typeof fileObj === "object" && fileObj !== null && "code" in fileObj
+              ? (fileObj as { code: string }).code
+              : "";
+          const zipPath = filePath.startsWith("/")
+            ? `src${filePath}`
+            : `src/${filePath}`;
+          zip.file(zipPath, code);
+        }
+
+        zip.file(
+          "src/index.js",
+          `import React from 'react';
+  import ReactDOM from 'react-dom/client';
+  import App from './App';
+  
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  root.render(<React.StrictMode><App /></React.StrictMode>);`
+        );
+
+        const blob = await zip.generateAsync({ type: "blob" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = appTitle
+        ?`${appTitle
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-|-$/g, "")}.zip`
+        : "forge-app.zip";
+      a.click();
+      URL.revokeObjectURL(url);
+      }catch (error) {
+        console.error("Export failed:", err);
+      } finally {
+        setIsExporting(false);
+      }
+    };
 
     const handleImproveSubmit = async () => {
       const trimmed = improveInput.trim();
@@ -236,6 +339,21 @@ const PLACEHOLDER_FILES = {
       </span>
     </PricingModal>
   )}
+
+<Button
+            variant="ghost"
+            onClick={handleExportZip}
+            disabled={isExporting || !fileData}
+          >
+            {isExporting ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Download className="h-3.5 w-3.5" />
+            )}
+            Download
+          </Button>
+        </div>
+      </div>
 
   </div>
 
