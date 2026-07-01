@@ -60,7 +60,7 @@ export const PLANS = {
         "Live preview",
         "Export to zip",
         "Image uploads",
-        "Access to Forge Pro Agent",
+        "Access to Bloom Pro Agent",
       ],
     },
   ] as const;
