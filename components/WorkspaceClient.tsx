@@ -328,7 +328,7 @@ const WorkspaceClient = ({ initialPrompt, userCredits, workspace, userId, userPl
             <ChatPanel
                 messages={messages}
                 isGenerating={isGenerating}
-                isImproving={false}
+                isImproving={isImproving}
                 statusLog={statusLog}
                 credits={credits}
                 initialPrompt={initialPrompt}
@@ -350,6 +350,9 @@ const WorkspaceClient = ({ initialPrompt, userCredits, workspace, userId, userPl
                 `There is an error in the preview:\n\n\`\`\`\n${error}\n\`\`\`\n\nPlease fix it.`
               )
             }
+            appTitle={fileData?.title ?? workspace?.title ?? null}
+            isProUser={userPlan === "pro"}
+            onImprove={handleImprove}
             />
         </div>
     )

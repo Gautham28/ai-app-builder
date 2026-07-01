@@ -12,9 +12,10 @@ import {
   } from "@codesandbox/sandpack-react";
   import {dracula} from "@codesandbox/sandpack-themes";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { AlertTriangle, Bot, Code2, Eye } from "lucide-react";
+import { AlertTriangle, ArrowUp, Bot, Code2, Eye, Loader2, Wand2 } from "lucide-react";
 import { RingLoader } from "react-spinners";
 import { Button } from "./ui/button";
+import PricingModal from "./PricingModal";
 
 const PLACEHOLDER_FILES = {
     "/App.js": {
@@ -71,6 +72,9 @@ const PLACEHOLDER_FILES = {
     onFilePatch: (patches: FileData) => void;
     isImproving: boolean;
     onFixError: (error: string) => Promise<void>;
+    isProUser: boolean;
+    appTitle: string | null;
+    onImprove: (userRequest: string) => Promise<void>;
 
   }
 
@@ -82,6 +86,9 @@ const PLACEHOLDER_FILES = {
     isImproving,
     statusLog,
     onFixError,
+    isProUser,
+    appTitle,
+    onImprove,
   } : {
     fileData: FileData | null;
     isGenerating: boolean;
@@ -90,10 +97,24 @@ const PLACEHOLDER_FILES = {
     isImproving : boolean;
     statusLog: StatusStep[];
     onFixError: (error: string) => Promise<void>;
+    isProUser: boolean;
+    appTitle: string | null;
+    onImprove: (userRequest: string) => Promise<void>;
   }) {
     const { sandpack,listen } = useSandpack();
     const [previewError, setPreviewError] = useState<string | null>(null);
     const unsubscribeRef = useRef<(() => void) | null>(null);
+
+    const [improveInput, setImproveInput] = useState("");
+    const [showImproveInput, setShowImproveInput] = useState(false);
+
+    const handleImproveSubmit = async () => {
+      const trimmed = improveInput.trim();
+      if (!trimmed || isImproving) return;
+      setImproveInput("");
+      setShowImproveInput(false);
+      await onImprove(trimmed);
+    };
 
     useEffect(() => {
       unsubscribeRef.current = listen((msg) => {
@@ -168,6 +189,54 @@ const PLACEHOLDER_FILES = {
             Preview
           </TabsTrigger>
     </TabsList>
+
+      {isProUser?(showImproveInput?(
+        <div className="flex items-center gap-1.5">
+                  <input
+                    autoFocus
+                    value={improveInput}
+                    onChange={(e) => setImproveInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleImproveSubmit();
+                      if (e.key === "Escape") setShowImproveInput(false);
+                    }}
+                    placeholder="What should I improve?"
+                    className="h-7 w-56 rounded-md border border-violet-500/30 bg-gradient-to-r from-violet-500/10 via-fuchsia-500/10 to-cyan-500/10 pl-8 pr-3 text-xs text-white/80 placeholder:text-white/30 focus:border-violet-400/50 focus:outline-none focus:shadow-[0_0_10px_rgba(139,92,246,0.2)]"
+                  />
+                  <Button
+                  onClick={handleImproveSubmit}
+                  disabled={!improveInput.trim() || isImproving}
+                  className="h-7 w-7 rounded-lg bg-white text-black hover:bg-white/90"
+                >
+                  {isImproving ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <ArrowUp className="h-3 w-3" />
+                  )}
+                </Button>
+
+        </div>
+      ): ( 
+        <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setShowImproveInput(true)}
+        disabled={isImproving || !fileData}
+        className= "h-7 gap-1.5 text-xs text-white/40 hover:text-white/70"
+        >
+          <Wand2 className="h-3.5 w-3.5" />
+          {isImproving ? "Improving..." : "Improve with Agent"}
+      </Button>
+    )
+  ):(
+    <PricingModal reason="upgrade">
+      <span className="flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-2 text-xs text-white/40 hover:text-white/70">
+        <Wand2 className="h-3.5 w-3.5 " />
+        Improve with Agent
+      </span>
+    </PricingModal>
+  )}
+
   </div>
 
   <div className="relative flex-1 overflow-hidden h-full">
@@ -266,6 +335,9 @@ const PLACEHOLDER_FILES = {
     onFilePatch: _onFilePatch,
     isImproving,
     onFixError,
+    isProUser,
+    appTitle,
+    onImprove,
   }: CodePanelProps){
         const [activeTab, setActiveTab] = useState<ActiveTab>("preview");
 
@@ -300,6 +372,9 @@ const PLACEHOLDER_FILES = {
                activeTab={activeTab}
                setActiveTab={setActiveTab}
                onFixError={onFixError}
+               isProUser={isProUser}
+               appTitle={appTitle}
+               onImprove={onImprove}
                /> 
             </SandpackProvider>
            </div> 
