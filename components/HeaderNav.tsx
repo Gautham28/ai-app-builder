@@ -1,7 +1,7 @@
 "use client"
 import Link from 'next/link'
 import Image from 'next/image'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { ArrowRight, Zap } from 'lucide-react'
 import { Show, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs'
@@ -16,17 +16,46 @@ interface HeaderNavProps {
   plan: Plan | null
 }
 
+const HEADER_HEIGHT = 64
+
 const HeaderNav = ({ credits, plan }: HeaderNavProps) => {
   const pathname = usePathname()
   const isLanding = pathname === "/"
+  const [pastHero, setPastHero] = useState(false)
+
+  useEffect(() => {
+    if (!isLanding) {
+      setPastHero(false)
+      return
+    }
+
+    const hero = document.getElementById("hero")
+    if (!hero) return
+
+    const update = () => {
+      setPastHero(hero.getBoundingClientRect().bottom <= HEADER_HEIGHT)
+    }
+
+    update()
+    window.addEventListener("scroll", update, { passive: true })
+    window.addEventListener("resize", update, { passive: true })
+    return () => {
+      window.removeEventListener("scroll", update)
+      window.removeEventListener("resize", update)
+    }
+  }, [isLanding])
+
+  const transparentNav = isLanding && !pastHero
 
   return (
     <header
       className={cn(
-        "w-full fixed top-0 left-0 z-50 h-16 border-b backdrop-blur-md",
-        isLanding
-          ? "border-black/5 bg-white/70"
-          : "border-white/6 bg-white/7"
+        "w-full fixed top-0 left-0 z-50 h-16 transition-[background-color,border-color,backdrop-filter] duration-300",
+        transparentNav
+          ? "border-transparent bg-transparent"
+          : isLanding
+            ? "border-b border-black/5 bg-white/90 backdrop-blur-md"
+            : "border-b border-white/6 bg-white/7 backdrop-blur-md"
       )}
     >
       <nav className='mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6'>

@@ -52,12 +52,16 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-white text-neutral-900 selection:bg-violet-200">
       {/* HERO */}
-      <section className="relative w-full overflow-hidden">
+      <section id="hero" className="relative w-full overflow-hidden">
         <div className="relative mx-auto aspect-[3/2] w-full">
           <div
             aria-hidden
             className="absolute inset-0 bg-[length:100%_100%] bg-no-repeat bg-top"
             style={{ backgroundImage: "url('/bloomAiBG.png')" }}
+          />
+          <div
+            aria-hidden
+            className="absolute inset-x-0 bottom-0 h-[40%] bg-linear-to-b from-transparent via-white/70 to-white"
           />
 
           <div className="relative z-10 flex flex-col items-center px-4 pt-32 pb-12 text-center sm:pt-36">
