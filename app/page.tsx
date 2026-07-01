@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { PricingTable, SignInButton, useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { cn } from "@/lib/utils"
 import { FEATURES, PLACEHOLDERS, STEPS, SUGGESTIONS } from "@/lib/data";
 import { ArrowRight, ChevronRight, Zap } from "lucide-react";
@@ -52,219 +51,217 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-white text-neutral-900 selection:bg-violet-200">
-      <section className="relative flex flex-col items-center overflow-hidden px-4 pb-24 pt-40 text-center">
-
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/bloomAiBG.png"
-            alt=""
-            fill
-            priority
-            className="object-cover object-top"
-          />
-          <div className="absolute inset-0 bg-linear-to-b from-white/10 via-white/40 to-white" />
-        </div>
-
-        <Badge
-          variant={'outline'}
-          className="relative z-10 gap-2 border-black/5 bg-white/70 p-4 text-neutral-700 backdrop-blur-sm"
-        >
-          <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-          Powered by Gemini 3.5 Flash
-        </Badge>
-
-        <h1 className="mx-auto max-w-3xl text-balance font-serif text-5xl leading-tight tracking-tight sm:text-7xl z-10">
-          <GrayTitle>Create your app</GrayTitle>
-          <br />
-          <BlueTitle>From a single prompt</BlueTitle>
-        </h1>
-
-        <p className="mx-auto mt-6 max-w-xl text-balance text-base leading-relaxed text-neutral-600 z-10">
-          Describe what you want to build. AI writes the code, picks the
-          packages, and renders a live preview all inside your browser.
-        </p>
-
-        <div className="relative z-10 mx-auto mt-12 w-full max-w-2xl">
+      {/* HERO */}
+      <section className="relative w-full overflow-hidden">
+        <div className="relative mx-auto aspect-[3/2] w-full">
           <div
-            className={cn(
-              "rounded-2xl border bg-white shadow-xl shadow-black/5 duration-200",
-              isFocused
-                ? "border-violet-300 ring-1 ring-violet-200"
-                : "border-neutral-200"
-            )}
-          >
-           <textarea
-              ref={textareaRef}
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-              placeholder={PLACEHOLDERS[placeholderIndex]}
-              rows={1}
-              className="w-full resize-none bg-transparent px-5 pb-4 pt-5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none sm:text-base"
-              style={{ minHeight: 56, maxHeight: 200 }}
-            />
+            aria-hidden
+            className="absolute inset-0 bg-[length:100%_100%] bg-no-repeat bg-top"
+            style={{ backgroundImage: "url('/bloomAiBG.png')" }}
+          />
 
-            <div className="flex items-center justify-between border-t border-neutral-100 px-4 py-2.5">
-              <span className="text-xs text-neutral-400">
-                Press ⏎ to generate · Shift+⏎ for new line
-              </span>
+          <div className="relative z-10 flex flex-col items-center px-4 pt-32 pb-12 text-center sm:pt-36">
+            <Badge
+              variant={'outline'}
+              className="gap-2 border-black/5 bg-white/70 p-4 text-neutral-700 backdrop-blur-sm"
+            >
+              <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+              Powered by Gemini 3.5 Flash
+            </Badge>
 
-              {isSignedIn ? (
-                <Button
-                  onClick={handleSubmit}
-                  disabled={!prompt.trim()}
-                  className="h-8 rounded-full bg-violet-600 px-5 font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
-                >
-                  Generate
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              ) : (
-                <SignInButton mode="modal">
-                  <Button className="h-8 rounded-full bg-violet-600 px-5 font-semibold text-white hover:bg-violet-700">
-                    Generate
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>
-                </SignInButton>
-              )}
-            </div>
-            </div>
+            <h1 className="mx-auto max-w-3xl text-balance font-serif text-5xl leading-tight tracking-tight sm:text-7xl">
+              <GrayTitle>Create your app</GrayTitle>
+              <br />
+              <BlueTitle>From a single prompt</BlueTitle>
+            </h1>
 
-            <div className="mt-4 flex flex-wrap justify-center gap-2">
-            {SUGGESTIONS.map(({ icon: Icon, label }) => (
-              <button
-                key={label}
-                onClick={() => handleSuggestion(label)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white/80 px-3 py-1.5 text-xs text-neutral-600 backdrop-blur hover:border-violet-300 hover:bg-white hover:text-violet-600"
+            <p className="mx-auto mt-6 max-w-xl text-balance text-base leading-relaxed text-neutral-600">
+              Describe what you want to build. AI writes the code, picks the
+              packages, and renders a live preview all inside your browser.
+            </p>
+
+            <div className="relative mx-auto mt-10 w-full max-w-2xl">
+              <div
+                className={cn(
+                  "rounded-2xl border bg-white shadow-xl shadow-black/5 duration-200",
+                  isFocused
+                    ? "border-violet-300 ring-1 ring-violet-200"
+                    : "border-neutral-200"
+                )}
               >
-                <Icon className="h-3.5 w-3.5" />
-                {label}
-              </button>
-            ))}
-          </div>
-          </div>
+               <textarea
+                  ref={textareaRef}
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                  placeholder={PLACEHOLDERS[placeholderIndex]}
+                  rows={1}
+                  className="w-full resize-none bg-transparent px-5 pb-4 pt-5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none sm:text-base"
+                  style={{ minHeight: 56, maxHeight: 200 }}
+                />
 
-          <p className="relative z-10 mt-10 text-xs text-neutral-400">
-             No credit card required · 10 free generations on sign up
-          </p>
+                <div className="flex items-center justify-between border-t border-neutral-100 px-4 py-2.5">
+                  <span className="text-xs text-neutral-400">
+                    Press ⏎ to generate · Shift+⏎ for new line
+                  </span>
 
+                  {isSignedIn ? (
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={!prompt.trim()}
+                      className="h-8 rounded-full bg-violet-600 px-5 font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
+                    >
+                      Generate
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>
+                  ) : (
+                    <SignInButton mode="modal">
+                      <Button className="h-8 rounded-full bg-violet-600 px-5 font-semibold text-white hover:bg-violet-700">
+                        Generate
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Button>
+                    </SignInButton>
+                  )}
+                </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                {SUGGESTIONS.map(({ icon: Icon, label }) => (
+                  <button
+                    key={label}
+                    onClick={() => handleSuggestion(label)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white/80 px-3 py-1.5 text-xs text-neutral-600 backdrop-blur hover:border-violet-300 hover:bg-white hover:text-violet-600"
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {label}
+                  </button>
+                ))}
+              </div>
+              </div>
+
+              <p className="mt-8 text-xs text-neutral-500">
+                 No credit card required · 10 free generations on sign up
+              </p>
+          </div>
+        </div>
       </section>
 
       {/* BROWSER MOCKUP */}
-      <section className="px-4 pb-32">
+      <section className="px-4 pb-32 pt-8">
         <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl shadow-black/10">
-          <div className="flex items-center gap-2 border-b border-neutral-100 px-4 py-3">
-            <div className="flex gap-1.5">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-3 w-3 rounded-full bg-neutral-200" />
-              ))}
-            </div>
+              <div className="flex items-center gap-2 border-b border-neutral-100 px-4 py-3">
+                <div className="flex gap-1.5">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="h-3 w-3 rounded-full bg-neutral-200" />
+                  ))}
+                </div>
 
-            <div className="mx-auto flex h-6 w-64 items-center justify-center rounded-md bg-neutral-100 px-3">
-              <span className="text-xs text-neutral-400">bloom.app/workspace</span>
-            </div>
-          </div>
-
-          <div className="flex h-105">
-            {/* Chat panel */}
-            <div className="flex w-80 flex-col border-r border-neutral-100 bg-neutral-50">
-              <div className="border-b border-neutral-100 px-4 py-3">
-                <p className="text-xs uppercase tracking-wider text-neutral-400">
-                  Chat
-                </p>
+                <div className="mx-auto flex h-6 w-64 items-center justify-center rounded-md bg-neutral-100 px-3">
+                  <span className="text-xs text-neutral-400">bloom.app/workspace</span>
+                </div>
               </div>
 
-              <div className="flex-1 space-y-4 px-4 py-4">
-                <div className="flex justify-end">
-                  <div className="max-w-55 rounded-2xl rounded-br-sm bg-violet-600 px-3.5 py-2.5">
-                    <p className="text-xs text-white">
-                      Build a kanban board with 3 columns and drag-and-drop
+              <div className="flex h-105">
+                {/* Chat panel */}
+                <div className="flex w-80 flex-col border-r border-neutral-100 bg-neutral-50">
+                  <div className="border-b border-neutral-100 px-4 py-3">
+                    <p className="text-xs uppercase tracking-wider text-neutral-400">
+                      Chat
                     </p>
                   </div>
-                </div>
 
-                <div className="flex gap-2.5">
-                  <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-violet-600">
-                    <Zap className="h-3 w-3 fill-white text-white" />
-                  </div>
-
-                  <div className="rounded-2xl rounded-tl-sm border border-neutral-200 bg-white px-3.5 py-2.5">
-                    <p className="text-xs text-neutral-600">
-                      I&apos;ll build a Kanban board with Todo, In Progress, and
-                      Done columns. I&apos;ll use{" "}
-                      <code className="text-violet-600">@dnd-kit/core</code>{" "}
-                      for smooth drag-and-drop…
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-2.5">
-                  <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-violet-600">
-                    <Zap className="h-3 w-3 fill-white text-white" />
-                  </div>
-                  <div className="flex items-center gap-1 rounded-2xl rounded-tl-sm border border-neutral-200 bg-white px-3.5 py-3">
-                    {[0, 0.15, 0.3].map((delay) => (
-                      <span
-                        key={delay}
-                        className="h-1.5 w-1.5 animate-bounce rounded-full bg-neutral-300"
-                        style={{ animationDelay: `${delay}s` }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t border-neutral-100 px-3 py-3">
-                <div className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 border border-neutral-200">
-                  <span className="flex-1 text-xs text-neutral-400">
-                    Ask AI to modify…
-                  </span>
-                  <ArrowRight className="h-3.5 w-3.5 text-neutral-400" />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-1 flex-col">
-              <div className="flex items-center gap-1 border-b border-neutral-100 px-4">
-                <button className="border-b-2 border-violet-500 px-3 py-2.5 text-xs text-neutral-900">
-                  Preview
-                </button>
-                <button className="px-3 py-2.5 text-xs text-neutral-400">
-                  Code
-                </button>
-              </div>
-
-              <div className="flex flex-1 gap-3 overflow-hidden bg-neutral-50 p-5">
-                {["Todo", "In Progress", "Done"].map((col, ci) => (
-                  <div key={col} className="flex w-1/3 flex-col gap-2">
-                    <div className="mb-1 flex items-center justify-between">
-                      <span className="text-xs uppercase tracking-wider text-neutral-500">
-                        {col}
-                      </span>
-
-                      <span className="rounded-full bg-neutral-200 px-1.5 py-0.5 text-xs text-neutral-500">
-                        {[3, 2, 1][ci]}
-                      </span>
+                  <div className="flex-1 space-y-4 px-4 py-4">
+                    <div className="flex justify-end">
+                      <div className="max-w-55 rounded-2xl rounded-br-sm bg-violet-600 px-3.5 py-2.5">
+                        <p className="text-xs text-white">
+                          Build a kanban board with 3 columns and drag-and-drop
+                        </p>
+                      </div>
                     </div>
 
-                    {Array.from({ length: [3, 2, 1][ci] }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="rounded-lg border border-neutral-200 bg-white p-2.5"
-                      >
-                        <div
-                          className="mb-1.5 h-2 rounded-full bg-neutral-200"
-                          style={{ width: `${60 + i * 15}%` }}
-                        />
-                        <div className="h-1.5 w-3/4 rounded-full bg-neutral-100" />
+                    <div className="flex gap-2.5">
+                      <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-violet-600">
+                        <Zap className="h-3 w-3 fill-white text-white" />
+                      </div>
+
+                      <div className="rounded-2xl rounded-tl-sm border border-neutral-200 bg-white px-3.5 py-2.5">
+                        <p className="text-xs text-neutral-600">
+                          I&apos;ll build a Kanban board with Todo, In Progress, and
+                          Done columns. I&apos;ll use{" "}
+                          <code className="text-violet-600">@dnd-kit/core</code>{" "}
+                          for smooth drag-and-drop…
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2.5">
+                      <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-violet-600">
+                        <Zap className="h-3 w-3 fill-white text-white" />
+                      </div>
+                      <div className="flex items-center gap-1 rounded-2xl rounded-tl-sm border border-neutral-200 bg-white px-3.5 py-3">
+                        {[0, 0.15, 0.3].map((delay) => (
+                          <span
+                            key={delay}
+                            className="h-1.5 w-1.5 animate-bounce rounded-full bg-neutral-300"
+                            style={{ animationDelay: `${delay}s` }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-neutral-100 px-3 py-3">
+                    <div className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 border border-neutral-200">
+                      <span className="flex-1 text-xs text-neutral-400">
+                        Ask AI to modify…
+                      </span>
+                      <ArrowRight className="h-3.5 w-3.5 text-neutral-400" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-1 flex-col">
+                  <div className="flex items-center gap-1 border-b border-neutral-100 px-4">
+                    <button className="border-b-2 border-violet-500 px-3 py-2.5 text-xs text-neutral-900">
+                      Preview
+                    </button>
+                    <button className="px-3 py-2.5 text-xs text-neutral-400">
+                      Code
+                    </button>
+                  </div>
+
+                  <div className="flex flex-1 gap-3 overflow-hidden bg-neutral-50 p-5">
+                    {["Todo", "In Progress", "Done"].map((col, ci) => (
+                      <div key={col} className="flex w-1/3 flex-col gap-2">
+                        <div className="mb-1 flex items-center justify-between">
+                          <span className="text-xs uppercase tracking-wider text-neutral-500">
+                            {col}
+                          </span>
+
+                          <span className="rounded-full bg-neutral-200 px-1.5 py-0.5 text-xs text-neutral-500">
+                            {[3, 2, 1][ci]}
+                          </span>
+                        </div>
+
+                        {Array.from({ length: [3, 2, 1][ci] }).map((_, i) => (
+                          <div
+                            key={i}
+                            className="rounded-lg border border-neutral-200 bg-white p-2.5"
+                          >
+                            <div
+                              className="mb-1.5 h-2 rounded-full bg-neutral-200"
+                              style={{ width: `${60 + i * 15}%` }}
+                            />
+                            <div className="h-1.5 w-3/4 rounded-full bg-neutral-100" />
+                          </div>
+                        ))}
                       </div>
                     ))}
                   </div>
-                ))}
+                </div>
               </div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -354,13 +351,12 @@ export default function Home() {
           <section className="relative mx-auto mb-32 max-w-5xl overflow-hidden rounded-2xl border border-neutral-200 px-10 py-24 text-center">
 
           <div className="absolute inset-0 z-0">
-            <Image
-              src="/bloomAiBG.png"
-              alt=""
-              fill
-              className="object-cover"
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              style={{ backgroundImage: "url('/bloomAiBG.png')" }}
             />
-            <div className="absolute inset-0 bg-white/55" />
+            <div className="absolute inset-0 bg-white/40" />
           </div>
 
         <div className="relative z-10">
