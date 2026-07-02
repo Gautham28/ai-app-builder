@@ -52,11 +52,11 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-white text-neutral-900 selection:bg-violet-200">
       {/* HERO */}
-      <section id="hero" className="relative w-full overflow-hidden">
+      <section id="hero" className="relative isolate w-full overflow-hidden">
         <div className="relative mx-auto aspect-[3/2] w-full">
           <div
             aria-hidden
-            className="absolute inset-0 bg-[length:100%_100%] bg-no-repeat bg-top"
+            className="absolute inset-0 translate-z-0 bg-[length:100%_100%] bg-no-repeat bg-top"
             style={{ backgroundImage: "url('/bloomAiBG.png')" }}
           />
           <div
@@ -67,7 +67,7 @@ export default function Home() {
           <div className="relative z-10 flex flex-col items-center px-4 pt-32 pb-12 text-center sm:pt-36">
             <Badge
               variant={'outline'}
-              className="gap-2 border-black/5 bg-white/70 p-4 text-neutral-700 backdrop-blur-sm"
+              className="gap-2 border-black/5 bg-white/90 p-4 text-neutral-700"
             >
               <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
               Powered by Gemini 3.5 Flash
@@ -136,7 +136,7 @@ export default function Home() {
                   <button
                     key={label}
                     onClick={() => handleSuggestion(label)}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white/80 px-3 py-1.5 text-xs text-neutral-600 backdrop-blur hover:border-violet-300 hover:bg-white hover:text-violet-600"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-600 hover:border-violet-300 hover:text-violet-600"
                   >
                     <Icon className="h-3.5 w-3.5" />
                     {label}
@@ -153,7 +153,7 @@ export default function Home() {
       </section>
 
       {/* BROWSER MOCKUP */}
-      <section className="px-4 pb-32 pt-8">
+      <section className="px-4 pb-32 pt-8 [content-visibility:auto]">
         <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl shadow-black/10">
               <div className="flex items-center gap-2 border-b border-neutral-100 px-4 py-3">
                 <div className="flex gap-1.5">
@@ -269,7 +269,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="px-4 pb-32">
+      <section className="px-4 pb-32 [content-visibility:auto]">
         <div className="mx-auto mb-14 max-w-5xl text-center">
           <SectionLabel>Everything you need</SectionLabel>
           <SectionHeading gray="From prompt" blue="to production." />

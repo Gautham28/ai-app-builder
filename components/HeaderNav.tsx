@@ -32,8 +32,18 @@ const HeaderNav = ({ credits, plan }: HeaderNavProps) => {
     const hero = document.getElementById("hero")
     if (!hero) return
 
+    let rafId = 0
+    let past = false
+
     const update = () => {
-      setPastHero(hero.getBoundingClientRect().bottom <= HEADER_HEIGHT)
+      cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(() => {
+        const next = hero.getBoundingClientRect().bottom <= HEADER_HEIGHT
+        if (next !== past) {
+          past = next
+          setPastHero(next)
+        }
+      })
     }
 
     update()
@@ -42,6 +52,7 @@ const HeaderNav = ({ credits, plan }: HeaderNavProps) => {
     return () => {
       window.removeEventListener("scroll", update)
       window.removeEventListener("resize", update)
+      cancelAnimationFrame(rafId)
     }
   }, [isLanding])
 
@@ -50,12 +61,12 @@ const HeaderNav = ({ credits, plan }: HeaderNavProps) => {
   return (
     <header
       className={cn(
-        "w-full fixed top-0 left-0 z-50 h-16 transition-[background-color,border-color,backdrop-filter] duration-300",
+        "w-full fixed top-0 left-0 z-50 h-16 translate-z-0 transition-colors duration-200",
         transparentNav
           ? "border-transparent bg-transparent"
           : isLanding
-            ? "border-b border-black/5 bg-white/90 backdrop-blur-md"
-            : "border-b border-white/6 bg-white/7 backdrop-blur-md"
+            ? "border-b border-black/5 bg-white"
+            : "border-b border-[#141414] bg-[#0a0a0a]"
       )}
     >
       <nav className='mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6'>
