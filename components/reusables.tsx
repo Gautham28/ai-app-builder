@@ -1,5 +1,5 @@
 export const GrayTitle = ({ children }: { children: React.ReactNode }) => (
-    <span className="text-neutral-900">{children}</span>
+    <span className="text-white">{children}</span>
   );
   
   export const BlueTitle = ({
@@ -17,10 +17,10 @@ export const GrayTitle = ({ children }: { children: React.ReactNode }) => (
   );
 
   export const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-    <p className="inline-flex items-center gap-2 text-xs font-semibold text-violet-500 tracking-[0.14em] uppercase mb-4">
-      <span className="w-4 h-px bg-violet-500" />
+    <p className="inline-flex items-center gap-2 text-xs font-semibold text-violet-400 tracking-[0.14em] uppercase mb-4">
+      <span className="w-4 h-px bg-violet-400" />
       {children}
-      <span className="w-4 h-px bg-violet-500" />
+      <span className="w-4 h-px bg-violet-400" />
     </p>
   );
   

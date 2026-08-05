@@ -49,18 +49,18 @@ export default function Home() {
     };
 
   return (
-    <main className="min-h-screen bg-white text-neutral-900 selection:bg-violet-200">
+    <main className="min-h-screen bg-[#0a0a0a] text-white selection:bg-violet-500/30">
       {/* HERO */}
       <section id="hero" className="relative isolate w-full overflow-hidden">
         <div className="relative mx-auto aspect-[3/2] w-full">
           <div
             aria-hidden
             className="absolute inset-0 translate-z-0 bg-[length:100%_100%] bg-no-repeat bg-top"
-            style={{ backgroundImage: "url('/bloom-bg-purple.png')" }}
+            style={{ backgroundImage: "url('/bloom-bg-purple-dark2.png')" }}
           />
           <div
             aria-hidden
-            className="absolute inset-x-0 bottom-0 h-[40%] bg-linear-to-b from-transparent via-white/70 to-white"
+            className="absolute inset-x-0 bottom-0 h-[40%] bg-linear-to-b from-transparent via-[#0a0a0a]/70 to-[#0a0a0a]"
           />
 
           <div className="relative z-10 flex flex-col items-center px-4 pt-32 pb-12 text-center sm:pt-36">
@@ -73,10 +73,10 @@ export default function Home() {
             <div className="relative mx-auto mt-10 w-full max-w-2xl">
               <div
                 className={cn(
-                  "rounded-2xl border bg-white shadow-xl shadow-black/5 duration-200",
+                  "rounded-2xl border bg-[#111] shadow-xl shadow-black/40 duration-200",
                   isFocused
-                    ? "border-violet-300 ring-1 ring-violet-200"
-                    : "border-neutral-200"
+                    ? "border-violet-500/50 ring-1 ring-violet-500/30"
+                    : "border-white/10"
                 )}
               >
                <textarea
@@ -88,12 +88,12 @@ export default function Home() {
                   onBlur={() => setIsFocused(false)}
                   placeholder={PLACEHOLDERS[placeholderIndex]}
                   rows={1}
-                  className="w-full resize-none bg-transparent px-5 pb-4 pt-5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none sm:text-base"
+                  className="w-full resize-none bg-transparent px-5 pb-4 pt-5 text-sm text-white placeholder:text-white/30 focus:outline-none sm:text-base"
                   style={{ minHeight: 56, maxHeight: 200 }}
                 />
 
-                <div className="flex items-center justify-between border-t border-neutral-100 px-4 py-2.5">
-                  <span className="text-xs text-neutral-400">
+                <div className="flex items-center justify-between border-t border-white/8 px-4 py-2.5">
+                  <span className="text-xs text-white/30">
                     Press ⏎ to generate · Shift+⏎ for new line
                   </span>
 
@@ -122,7 +122,7 @@ export default function Home() {
                   <button
                     key={label}
                     onClick={() => handleSuggestion(label)}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs text-neutral-600 hover:border-violet-300 hover:text-violet-600"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/60 hover:border-violet-500/40 hover:text-violet-300"
                   >
                     <Icon className="h-3.5 w-3.5" />
                     {label}
@@ -131,7 +131,7 @@ export default function Home() {
               </div>
               </div>
 
-              <p className="mt-8 text-xs text-neutral-500">
+              <p className="mt-8 text-xs text-white/35">
                  No credit card required · 10 free generations on sign up
               </p>
           </div>
@@ -140,24 +140,24 @@ export default function Home() {
 
       {/* BROWSER MOCKUP */}
       <section className="px-4 pb-32 pt-8 [content-visibility:auto]">
-        <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl shadow-black/10">
-              <div className="flex items-center gap-2 border-b border-neutral-100 px-4 py-3">
+        <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-white/10 bg-[#111] shadow-2xl shadow-black/40">
+              <div className="flex items-center gap-2 border-b border-white/8 px-4 py-3">
                 <div className="flex gap-1.5">
                   {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="h-3 w-3 rounded-full bg-neutral-200" />
+                    <div key={i} className="h-3 w-3 rounded-full bg-white/15" />
                   ))}
                 </div>
 
-                <div className="mx-auto flex h-6 w-64 items-center justify-center rounded-md bg-neutral-100 px-3">
-                  <span className="text-xs text-neutral-400">bloom.app/workspace</span>
+                <div className="mx-auto flex h-6 w-64 items-center justify-center rounded-md bg-white/5 px-3">
+                  <span className="text-xs text-white/30">bloom.app/workspace</span>
                 </div>
               </div>
 
               <div className="flex h-105">
                 {/* Chat panel */}
-                <div className="flex w-80 flex-col border-r border-neutral-100 bg-neutral-50">
-                  <div className="border-b border-neutral-100 px-4 py-3">
-                    <p className="text-xs uppercase tracking-wider text-neutral-400">
+                <div className="flex w-80 flex-col border-r border-white/8 bg-[#0d0d0d]">
+                  <div className="border-b border-white/8 px-4 py-3">
+                    <p className="text-xs uppercase tracking-wider text-white/30">
                       Chat
                     </p>
                   </div>
@@ -176,11 +176,11 @@ export default function Home() {
                         <Zap className="h-3 w-3 fill-white text-white" />
                       </div>
 
-                      <div className="rounded-2xl rounded-tl-sm border border-neutral-200 bg-white px-3.5 py-2.5">
-                        <p className="text-xs text-neutral-600">
+                      <div className="rounded-2xl rounded-tl-sm border border-white/10 bg-white/5 px-3.5 py-2.5">
+                        <p className="text-xs text-white/60">
                           I&apos;ll build a Kanban board with Todo, In Progress, and
                           Done columns. I&apos;ll use{" "}
-                          <code className="text-violet-600">@dnd-kit/core</code>{" "}
+                          <code className="text-violet-400">@dnd-kit/core</code>{" "}
                           for smooth drag-and-drop…
                         </p>
                       </div>
@@ -190,11 +190,11 @@ export default function Home() {
                       <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-violet-600">
                         <Zap className="h-3 w-3 fill-white text-white" />
                       </div>
-                      <div className="flex items-center gap-1 rounded-2xl rounded-tl-sm border border-neutral-200 bg-white px-3.5 py-3">
+                      <div className="flex items-center gap-1 rounded-2xl rounded-tl-sm border border-white/10 bg-white/5 px-3.5 py-3">
                         {[0, 0.15, 0.3].map((delay) => (
                           <span
                             key={delay}
-                            className="h-1.5 w-1.5 animate-bounce rounded-full bg-neutral-300"
+                            className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/25"
                             style={{ animationDelay: `${delay}s` }}
                           />
                         ))}
@@ -202,35 +202,35 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="border-t border-neutral-100 px-3 py-3">
-                    <div className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 border border-neutral-200">
-                      <span className="flex-1 text-xs text-neutral-400">
+                  <div className="border-t border-white/8 px-3 py-3">
+                    <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                      <span className="flex-1 text-xs text-white/30">
                         Ask AI to modify…
                       </span>
-                      <ArrowRight className="h-3.5 w-3.5 text-neutral-400" />
+                      <ArrowRight className="h-3.5 w-3.5 text-white/30" />
                     </div>
                   </div>
                 </div>
 
                 <div className="flex flex-1 flex-col">
-                  <div className="flex items-center gap-1 border-b border-neutral-100 px-4">
-                    <button className="border-b-2 border-violet-500 px-3 py-2.5 text-xs text-neutral-900">
+                  <div className="flex items-center gap-1 border-b border-white/8 px-4">
+                    <button className="border-b-2 border-violet-500 px-3 py-2.5 text-xs text-white">
                       Preview
                     </button>
-                    <button className="px-3 py-2.5 text-xs text-neutral-400">
+                    <button className="px-3 py-2.5 text-xs text-white/30">
                       Code
                     </button>
                   </div>
 
-                  <div className="flex flex-1 gap-3 overflow-hidden bg-neutral-50 p-5">
+                  <div className="flex flex-1 gap-3 overflow-hidden bg-[#0d0d0d] p-5">
                     {["Todo", "In Progress", "Done"].map((col, ci) => (
                       <div key={col} className="flex w-1/3 flex-col gap-2">
                         <div className="mb-1 flex items-center justify-between">
-                          <span className="text-xs uppercase tracking-wider text-neutral-500">
+                          <span className="text-xs uppercase tracking-wider text-white/40">
                             {col}
                           </span>
 
-                          <span className="rounded-full bg-neutral-200 px-1.5 py-0.5 text-xs text-neutral-500">
+                          <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-xs text-white/40">
                             {[3, 2, 1][ci]}
                           </span>
                         </div>
@@ -238,13 +238,13 @@ export default function Home() {
                         {Array.from({ length: [3, 2, 1][ci] }).map((_, i) => (
                           <div
                             key={i}
-                            className="rounded-lg border border-neutral-200 bg-white p-2.5"
+                            className="rounded-lg border border-white/10 bg-white/5 p-2.5"
                           >
                             <div
-                              className="mb-1.5 h-2 rounded-full bg-neutral-200"
+                              className="mb-1.5 h-2 rounded-full bg-white/15"
                               style={{ width: `${60 + i * 15}%` }}
                             />
-                            <div className="h-1.5 w-3/4 rounded-full bg-neutral-100" />
+                            <div className="h-1.5 w-3/4 rounded-full bg-white/8" />
                           </div>
                         ))}
                       </div>
@@ -261,17 +261,17 @@ export default function Home() {
           <SectionHeading gray="From prompt" blue="to production." />
         </div>
 
-        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-px overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-200 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map(({ icon: Icon, label, desc }) => (
             <div
               key={label}
-              className="group bg-white p-7 hover:bg-neutral-50"
+              className="group bg-[#111] p-7 hover:bg-[#161616]"
             >
-              <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50 group-hover:border-violet-200 group-hover:bg-violet-50">
-                <Icon className="h-4 w-4 text-neutral-500 group-hover:text-violet-600" />
+              <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 group-hover:border-violet-500/30 group-hover:bg-violet-500/10">
+                <Icon className="h-4 w-4 text-white/40 group-hover:text-violet-400" />
               </div>
-              <p className="mb-2 text-sm font-semibold text-neutral-900">{label}</p>
-              <p className="text-sm leading-relaxed text-neutral-500">{desc}</p>
+              <p className="mb-2 text-sm font-semibold text-white">{label}</p>
+              <p className="text-sm leading-relaxed text-white/40">{desc}</p>
             </div>
           ))}
         </div>
@@ -287,23 +287,23 @@ export default function Home() {
           {STEPS.map((step, i) => (
             <div key={step.number} className="flex gap-6">
               <div className="flex flex-col items-center">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200 bg-neutral-50">
-                  <span className="font-mono text-xs font-semibold text-neutral-500">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5">
+                  <span className="font-mono text-xs font-semibold text-white/50">
                     {step.number}
                   </span>
                 </div>
 
                 {i < STEPS.length - 1 && (
-                  <div className="mt-2 h-full w-px bg-neutral-200" />
+                  <div className="mt-2 h-full w-px bg-white/10" />
                 )}
               </div>
 
               <div className="pb-10 pt-1.5">
-                <p className="mb-1.5 text-sm font-semibold text-neutral-900 sm:text-base">
+                <p className="mb-1.5 text-sm font-semibold text-white sm:text-base">
                   {step.label}
                 </p>
 
-                <p className="text-sm leading-relaxed text-neutral-500">
+                <p className="text-sm leading-relaxed text-white/40">
                   {step.desc}
                 </p>
               </div>
@@ -318,7 +318,7 @@ export default function Home() {
           <SectionLabel>Simple Pricing</SectionLabel>
           <SectionHeading gray="Start free" blue="scale when ready." />
 
-          <p className="mx-auto mt-4 max-w-sm text-sm text-neutral-500">
+          <p className="mx-auto mt-4 max-w-sm text-sm text-white/40">
             No credit card required. Upgrade or downgrade anytime.
           </p>
         </div>
@@ -338,21 +338,21 @@ export default function Home() {
         </div>
       </section>
 
-          <section className="relative mx-auto mb-32 max-w-5xl overflow-hidden rounded-2xl border border-neutral-200 px-10 py-24 text-center">
+          <section className="relative mx-auto mb-32 max-w-5xl overflow-hidden rounded-2xl border border-white/10 px-10 py-24 text-center">
 
           <div className="absolute inset-0 z-0">
             <div
               aria-hidden
               className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-              style={{ backgroundImage: "url('/bloomAiBG.png')" }}
+              style={{ backgroundImage: "url('/bloom-bg-purple-dark.png')" }}
             />
-            <div className="absolute inset-0 bg-white/40" />
+            <div className="absolute inset-0 bg-[#0a0a0a]/55" />
           </div>
 
         <div className="relative z-10">
           <SectionHeading gray="Start building, " blue="for free." />
 
-          <p className="mb-8 text-sm leading-relaxed text-neutral-600">
+          <p className="mb-8 text-sm leading-relaxed text-white/50">
             Get 10 free generations on sign up. No credit card required.
             <br />
             Upgrade when you&apos;re ready.
@@ -370,7 +370,7 @@ export default function Home() {
         </div>
           </section>
 
-          <footer className="relative z-10 border-t border-neutral-200 py-12 mx-auto px-6 flex flex-wrap items-center justify-center text-neutral-500">
+          <footer className="relative z-10 border-t border-white/8 py-12 mx-auto px-6 flex flex-wrap items-center justify-center text-white/30">
         Made with ❤️ by gthm
       </footer>
 
