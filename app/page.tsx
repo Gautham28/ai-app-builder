@@ -1,6 +1,5 @@
 "use client"
 import { BlueTitle, GrayTitle, SectionHeading, SectionLabel } from "@/components/reusables";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PricingTable, SignInButton, useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
@@ -57,7 +56,7 @@ export default function Home() {
           <div
             aria-hidden
             className="absolute inset-0 translate-z-0 bg-[length:100%_100%] bg-no-repeat bg-top"
-            style={{ backgroundImage: "url('/bloomAiBG.png')" }}
+            style={{ backgroundImage: "url('/bloom-bg-purple.png')" }}
           />
           <div
             aria-hidden
@@ -65,24 +64,11 @@ export default function Home() {
           />
 
           <div className="relative z-10 flex flex-col items-center px-4 pt-32 pb-12 text-center sm:pt-36">
-            <Badge
-              variant={'outline'}
-              className="gap-2 border-black/5 bg-white/90 p-4 text-neutral-700"
-            >
-              <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-              Powered by Gemini 3.5 Flash
-            </Badge>
-
             <h1 className="mx-auto max-w-3xl text-balance font-serif text-5xl leading-tight tracking-tight sm:text-7xl">
               <GrayTitle>Create your app</GrayTitle>
               <br />
               <BlueTitle>From a single prompt</BlueTitle>
             </h1>
-
-            <p className="mx-auto mt-6 max-w-xl text-balance text-base leading-relaxed text-neutral-600">
-              Describe what you want to build. AI writes the code, picks the
-              packages, and renders a live preview all inside your browser.
-            </p>
 
             <div className="relative mx-auto mt-10 w-full max-w-2xl">
               <div
