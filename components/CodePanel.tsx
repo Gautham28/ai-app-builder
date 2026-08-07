@@ -162,7 +162,7 @@ const PLACEHOLDER_FILES = {
     <head>
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
-      <title>Forge App</title>
+      <title>Bloom App</title>
       <script src="https://cdn.tailwindcss.com"></script>
     </head>
     <body>
@@ -201,7 +201,7 @@ const PLACEHOLDER_FILES = {
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, "-")
             .replace(/^-|-$/g, "")}.zip`
-        : "forge-app.zip";
+        : "bloom-app.zip";
       a.click();
       URL.revokeObjectURL(url);
       } catch (error) {

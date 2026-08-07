@@ -217,8 +217,8 @@ const ChatPanel = ({
               ) : (
                 <div className="flex items-start gap-2">
                   <Image
-                    src="/logo-short.jpeg"
-                    alt="Forge"
+                    src="/logo-short2.svg"
+                    alt="Bloom"
                     width={24}
                     height={24}
                     className="mt-0.5 h-6 w-6 shrink-0 rounded-md"
@@ -263,8 +263,8 @@ const ChatPanel = ({
         {isGenerating && (
           <div className="flex items-start gap-2">
             <Image
-              src="/logo-short.jpeg"
-              alt="Forge"
+              src="/logo-short2.svg"
+              alt="Bloom"
               width={24}
               height={24}
               className="mt-0.5 h-6 w-6 shrink-0 rounded-md"

@@ -1,12 +1,25 @@
-import { Sparkles, Zap, Code2, Eye, Package, ImageIcon } from "lucide-react";
+import {
+  Sparkles,
+  Zap,
+  Code2,
+  Eye,
+  Package,
+  ImageIcon,
+  Music,
+  LayoutGrid,
+  CloudSun,
+  Wallet,
+  UtensilsCrossed,
+  Timer,
+} from "lucide-react";
 
 export const SUGGESTIONS = [
-  "A Spotify stats dashboard with charts",
-  "A kanban board with drag and drop",
-  "A weather app with animated icons",
-  "A personal finance tracker",
-  "A recipe finder with filters",
-  "A pomodoro timer with tasks",
+  { icon: Music, label: "A Spotify stats dashboard with charts" },
+  { icon: LayoutGrid, label: "A kanban board with drag and drop" },
+  { icon: CloudSun, label: "A weather app with animated icons" },
+  { icon: Wallet, label: "A personal finance tracker" },
+  { icon: UtensilsCrossed, label: "A recipe finder with filters" },
+  { icon: Timer, label: "A pomodoro timer with tasks" },
 ];
 
 export const FEATURES = [
