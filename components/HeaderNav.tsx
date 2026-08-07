@@ -21,6 +21,7 @@ const HEADER_HEIGHT = 64
 const HeaderNav = ({ credits, plan }: HeaderNavProps) => {
   const pathname = usePathname()
   const isLanding = pathname === "/"
+  const isPreview = pathname === "/preview" || pathname.startsWith("/preview/")
   const [pastHero, setPastHero] = useState(false)
 
   useEffect(() => {
@@ -57,6 +58,8 @@ const HeaderNav = ({ credits, plan }: HeaderNavProps) => {
   }, [isLanding])
 
   const transparentNav = isLanding && !pastHero
+
+  if (isPreview) return null
 
   return (
     <header

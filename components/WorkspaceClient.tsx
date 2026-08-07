@@ -353,6 +353,7 @@ const WorkspaceClient = ({ initialPrompt, userCredits, workspace, userId, userPl
             appTitle={fileData?.title ?? workspace?.title ?? null}
             isProUser={userPlan === "pro"}
             onImprove={handleImprove}
+            workspaceId={workspaceId}
             />
         </div>
     )

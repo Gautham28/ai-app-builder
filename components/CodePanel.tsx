@@ -12,11 +12,12 @@ import {
   } from "@codesandbox/sandpack-react";
   import {dracula} from "@codesandbox/sandpack-themes";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { AlertTriangle, ArrowUp, Bot, Code2, Download, Eye, Loader2, Wand2 } from "lucide-react";
+import { AlertTriangle, ArrowUp, Bot, Code2, Download, ExternalLink, Eye, Loader2, Wand2 } from "lucide-react";
 import { RingLoader } from "react-spinners";
 import { Button } from "./ui/button";
 import PricingModal from "./PricingModal";
 import JSZip from "jszip";
+import { BASE_DEPENDENCIES, storePreviewPayload } from "@/lib/sandpack";
 
 const PLACEHOLDER_FILES = {
     "/App.js": {
@@ -40,30 +41,6 @@ const PLACEHOLDER_FILES = {
     },
   };
 
-  
-  const BASE_DEPENDENCIES: Record<string, string> = {
-    "react-is": "latest",
-    "react-router-dom": "latest",
-    "lucide-react": "latest",
-    recharts: "latest",
-    "date-fns": "latest",
-    "framer-motion": "latest",
-    "react-hook-form": "latest",
-    "@hookform/resolvers": "latest",
-    zod: "latest",
-    "@radix-ui/react-dialog": "latest",
-    "@radix-ui/react-dropdown-menu": "latest",
-    "@radix-ui/react-tabs": "latest",
-    "@radix-ui/react-tooltip": "latest",
-    "@radix-ui/react-accordion": "latest",
-    "@radix-ui/react-select": "latest",
-    axios: "latest",
-    clsx: "latest",
-    "class-variance-authority": "latest",
-    "tailwind-merge": "latest",
-  };
-
-
   type ActiveTab = "preview" | "code";
 
   interface CodePanelProps {
@@ -76,7 +53,7 @@ const PLACEHOLDER_FILES = {
     isProUser: boolean;
     appTitle: string | null;
     onImprove: (userRequest: string) => Promise<void>;
-
+    workspaceId: string | null;
   }
 
   function SandpackInner({
@@ -90,6 +67,7 @@ const PLACEHOLDER_FILES = {
     isProUser,
     appTitle,
     onImprove,
+    workspaceId,
   } : {
     fileData: FileData | null;
     isGenerating: boolean;
@@ -101,6 +79,7 @@ const PLACEHOLDER_FILES = {
     isProUser: boolean;
     appTitle: string | null;
     onImprove: (userRequest: string) => Promise<void>;
+    workspaceId: string | null;
   }) {
     const { sandpack,listen } = useSandpack();
     const [previewError, setPreviewError] = useState<string | null>(null);
@@ -219,6 +198,19 @@ const PLACEHOLDER_FILES = {
       await onImprove(trimmed);
     };
 
+    const handleOpenInNewTab = () => {
+      if (!fileData) return;
+      try {
+        storePreviewPayload(fileData, workspaceId);
+      } catch {
+        // sessionStorage may be unavailable; still open the tab
+      }
+      const url = workspaceId
+        ? `/preview?id=${encodeURIComponent(workspaceId)}`
+        : "/preview";
+      window.open(url, "_blank", "noopener,noreferrer");
+    };
+
     useEffect(() => {
       unsubscribeRef.current = listen((msg) => {
         if (
@@ -335,6 +327,17 @@ const PLACEHOLDER_FILES = {
       </span>
     </PricingModal>
   )}
+
+<Button
+            variant="ghost"
+            size="sm"
+            onClick={handleOpenInNewTab}
+            disabled={!fileData || isGenerating || isImproving}
+            className="h-7 gap-1.5 text-xs text-white/40 hover:text-white/70"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            New tab
+          </Button>
 
 <Button
             variant="ghost"
@@ -459,6 +462,7 @@ const PLACEHOLDER_FILES = {
     isProUser,
     appTitle,
     onImprove,
+    workspaceId,
   }: CodePanelProps){
         const [activeTab, setActiveTab] = useState<ActiveTab>("preview");
 
@@ -498,6 +502,7 @@ const PLACEHOLDER_FILES = {
                isProUser={isProUser}
                appTitle={appTitle}
                onImprove={onImprove}
+               workspaceId={workspaceId}
                /> 
             </SandpackProvider>
            </div> 
