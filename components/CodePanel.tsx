@@ -12,7 +12,7 @@ import {
   } from "@codesandbox/sandpack-react";
   import {dracula} from "@codesandbox/sandpack-themes";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { AlertTriangle, ArrowUp, Bot, Code2, Download, ExternalLink, Eye, Loader2, Wand2 } from "lucide-react";
+import { AlertTriangle, ArrowUp, Bot, Code2, Download, ExternalLink, Eye, Loader2, RefreshCw, Wand2 } from "lucide-react";
 import { RingLoader } from "react-spinners";
 import { Button } from "./ui/button";
 import PricingModal from "./PricingModal";
@@ -81,14 +81,22 @@ const PLACEHOLDER_FILES = {
     onImprove: (userRequest: string) => Promise<void>;
     workspaceId: string | null;
   }) {
-    const { sandpack,listen } = useSandpack();
+    const { sandpack, listen, dispatch } = useSandpack();
     const [previewError, setPreviewError] = useState<string | null>(null);
     const unsubscribeRef = useRef<(() => void) | null>(null);
 
     const[isExporting, setIsExporting] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const [improveInput, setImproveInput] = useState("");
     const [showImproveInput, setShowImproveInput] = useState(false);
+
+    const handleRefreshPreview = () => {
+      if (isRefreshing) return;
+      setIsRefreshing(true);
+      dispatch({ type: "refresh" });
+      window.setTimeout(() => setIsRefreshing(false), 600);
+    };
 
     const handleExportZip = async () => {
       if (isExporting) return;
@@ -421,6 +429,20 @@ const PLACEHOLDER_FILES = {
 
             </TabsContent>
         </SandpackLayout>
+
+        {activeTab === "preview" && fileData && !isGenerating && !isImproving && (
+          <button
+            type="button"
+            onClick={handleRefreshPreview}
+            title="Refresh preview"
+            aria-label="Refresh preview"
+            className="absolute bottom-3 right-3 z-30 flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white text-black/70 shadow-md transition-colors hover:bg-black/[0.03] hover:text-black"
+          >
+            <RefreshCw
+              className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`}
+            />
+          </button>
+        )}
         </div>
 
         {previewError && !isGenerating && !isImproving && (
