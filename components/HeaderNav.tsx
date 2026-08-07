@@ -70,7 +70,7 @@ const HeaderNav = ({ credits, plan }: HeaderNavProps) => {
           : "border-b border-[#141414] bg-[#0a0a0a]"
       )}
     >
-      <nav className='mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6'>
+      <nav className='flex h-full w-full items-center justify-between px-4 sm:px-5'>
         <Link href='/' className='flex items-center gap-2'>
           <Image
             src="/logo-short2.svg"
