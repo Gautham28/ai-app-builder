@@ -113,17 +113,13 @@ const WorkspaceClient = ({ initialPrompt, userCredits, workspace, userId, userPl
             headers: { "Content-Type": "application/json" },
             signal: abortController.signal,
             body: JSON.stringify({
-              userId,
               workspaceId: workspaceIdRef.current,
               userRequest,
-              fileData: currentFileData,
             }),
           });
   
           if (res.status === 403) {
-            toast.error(
-              "Upgrade to Starter or Pro to use Improve with Bloom Agent."
-            );
+            toast.error("Upgrade to Pro to use Improve with Bloom Agent.");
             setMessages((prev) => prev.slice(0, -2));
             return;
           }
@@ -132,7 +128,18 @@ const WorkspaceClient = ({ initialPrompt, userCredits, workspace, userId, userPl
             setMessages((prev) => prev.slice(0, -2));
             return;
           }
-          if (!res.ok || !res.body) throw new Error("Improve failed");
+          if (res.status === 429) {
+            toast.error("Too many requests. Please slow down.");
+            setMessages((prev) => prev.slice(0, -2));
+            return;
+          }
+          if (!res.ok || !res.body) {
+            const detail = await res
+              .json()
+              .then((b) => b?.message as string | undefined)
+              .catch(() => undefined);
+            throw new Error(detail ?? "Improve failed");
+          }
   
           const reader = res.body.getReader();
           const decoder = new TextDecoder();
@@ -154,41 +161,44 @@ const WorkspaceClient = ({ initialPrompt, userCredits, workspace, userId, userPl
   
             for (const line of lines) {
               if (!line.startsWith("data: ")) continue;
+
+              // Skip only unparseable frames; real errors must reach the catch below.
+              let event;
               try {
-                const event = JSON.parse(line.slice(6));
-  
-                if (event.type === "thinking") {
-                  // Stream agent reasoning into the placeholder assistant message
-                  accumulatedThinking += event.text;
-                  setMessages((prev) => {
-                    const updated = [...prev];
-                    updated[updated.length - 1] = {
-                      role: "assistant",
-                      content: accumulatedThinking,
-                    };
-                    return updated;
-                  });
-                } else if (event.type === "file_patch") {
-                  // Accumulate locally — don't touch state yet
-                  localPatches[event.path] = { code: event.code };
-                } else if (event.type === "done") {
-                  // Apply all patches at once now that the stream is complete
-                  setFileData(event.fileData);
-                  setCredits(event.creditsRemaining);
-                  // Replace thinking text with clean summary
-                  setMessages((prev) => {
-                    const updated = [...prev];
-                    updated[updated.length - 1] = {
-                      role: "assistant",
-                      content: event.summary,
-                    };
-                    return updated;
-                  });
-                } else if (event.type === "error") {
-                  throw new Error(event.message);
-                }
+                event = JSON.parse(line.slice(6));
               } catch {
-                // skip malformed SSE lines
+                continue;
+              }
+
+              if (event.type === "thinking") {
+                // Stream agent reasoning into the placeholder assistant message
+                accumulatedThinking += event.text;
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  updated[updated.length - 1] = {
+                    role: "assistant",
+                    content: accumulatedThinking,
+                  };
+                  return updated;
+                });
+              } else if (event.type === "file_patch") {
+                // Accumulate locally — don't touch state yet
+                localPatches[event.path] = { code: event.code };
+              } else if (event.type === "done") {
+                // Apply all patches at once now that the stream is complete
+                setFileData(event.fileData);
+                setCredits(event.creditsRemaining);
+                // Replace thinking text with clean summary
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  updated[updated.length - 1] = {
+                    role: "assistant",
+                    content: event.summary,
+                  };
+                  return updated;
+                });
+              } else if (event.type === "error") {
+                throw new Error(event.message);
               }
             }
           }
@@ -206,8 +216,7 @@ const WorkspaceClient = ({ initialPrompt, userCredits, workspace, userId, userPl
         }
       },
       // fileData intentionally omitted — read via fileDataRef above
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      [credits, isGenerating, isImproving, userId]
+      [credits, isGenerating, isImproving]
     );
 
     const handleGenerate = useCallback(
@@ -233,20 +242,19 @@ const WorkspaceClient = ({ initialPrompt, userCredits, workspace, userId, userPl
 
           try {
             const conversationHistory = [...currentMessages, userMessage];
-            const abortController = new AbortController();
-    
+
             const res = await fetch("/api/gen-ai-code", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               signal: abortController.signal,
               body: JSON.stringify({
                 workspaceId: currentWorkspaceId,
-                userId,
                 messages: conversationHistory,
                 fileData: fileDataRef.current,
               }),
             });
             if (res.status === 402) {
+                toast.error("Not enough credits.");
                 setMessages((prev) => prev.slice(0, -1));
                 return;
               }
@@ -255,7 +263,13 @@ const WorkspaceClient = ({ initialPrompt, userCredits, workspace, userId, userPl
                 setMessages((prev) => prev.slice(0, -1));
                 return;
               }
-              if (!res.ok || !res.body) throw new Error("Generation failed");
+              if (!res.ok || !res.body) {
+                const detail = await res
+                  .json()
+                  .then((b) => b?.message as string | undefined)
+                  .catch(() => undefined);
+                throw new Error(detail ?? "Generation failed");
+              }
 
               const reader = res.body.getReader();
               const decoder = new TextDecoder();
@@ -272,30 +286,33 @@ const WorkspaceClient = ({ initialPrompt, userCredits, workspace, userId, userPl
                 for (const line of lines) {
                     if (!line.startsWith("data: ")) continue;
 
+                    // Only malformed SSE frames are skipped. A server-reported
+                    // error must propagate to the outer handler so the user sees it.
+                    let event;
                     try {
-                        const event = JSON.parse(line.slice(6));
+                        event = JSON.parse(line.slice(6));
+                    } catch {
+                        continue;
+                    }
 
-                        if (event.type === "status"){
-                            pushStep(event.message);
-                        }else if (event.type === "done") {
-                            completeSteps();
-                            setWorkspaceId(event.workspaceId);
-                            setFileData(event.fileData);
-                            setCredits(event.creditsRemaining);
-                            setMessages((prev) => [
-                              ...prev,
-                              { role: "assistant", content: event.assistantMessage },
-                            ]);
-                            window.history.replaceState(
-                              null,
-                              "",
-                              `/workspace?id=${event.workspaceId}`
-                            );
-                        } else if (event.type === "error"){
-                            throw new Error(event.message);
-                        }
-                    } catch (error) {
-                        
+                    if (event.type === "status"){
+                        pushStep(event.message);
+                    }else if (event.type === "done") {
+                        completeSteps();
+                        setWorkspaceId(event.workspaceId);
+                        setFileData(event.fileData);
+                        setCredits(event.creditsRemaining);
+                        setMessages((prev) => [
+                          ...prev,
+                          { role: "assistant", content: event.assistantMessage },
+                        ]);
+                        window.history.replaceState(
+                          null,
+                          "",
+                          `/workspace?id=${event.workspaceId}`
+                        );
+                    } else if (event.type === "error"){
+                        throw new Error(event.message);
                     }
                 }
               }
@@ -315,7 +332,7 @@ const WorkspaceClient = ({ initialPrompt, userCredits, workspace, userId, userPl
             setStatusLog([]);
         }
     },
-        [credits, isGenerating, userId],
+        [credits, isGenerating],
     );
 
     const handleStop = useCallback(() => {

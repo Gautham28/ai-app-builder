@@ -3,13 +3,26 @@ import { NextRequest } from "next/server";
 import { Agent, createTool } from "@cline/sdk";
 import { z } from "zod";
 import { db } from "@/lib/prisma";
-import { CREDIT_COST_PER_GENERATION } from "@/lib/constants";
 import type { FileData } from "@/types/workspace";
+import { aj } from "@/lib/arcjet";
+import { getCredits, refundCredit, reserveCredit } from "@/lib/credits";
+import { improveRequestSchema } from "@/lib/validation";
 
 // ─── SSE helper ───────────────────────────────────────────────────────────────
 
 function sseEvent(type: string, payload: object): string {
   return `data: ${JSON.stringify({ type, ...payload })}\n\n`;
+}
+
+function parseFileData(raw: unknown): FileData | null {
+  if (!raw || typeof raw !== "object") return null;
+  const candidate = raw as Partial<FileData>;
+  if (!candidate.files || typeof candidate.files !== "object") return null;
+  return {
+    files: candidate.files,
+    dependencies: candidate.dependencies ?? {},
+    title: candidate.title,
+  };
 }
 
 // ─── Route ────────────────────────────────────────────────────────────────────
@@ -19,19 +32,52 @@ export async function POST(request: NextRequest) {
   if (!clerkId)
     return Response.json({ message: "Unauthorized" }, { status: 401 });
 
-  const body = await request.json();
-  const { userId, workspaceId, userRequest, fileData } = body as {
-    userId: string;
-    workspaceId: string;
-    userRequest: string; // what the user wants improved
-    fileData: FileData;
-  };
+  let rawBody: unknown;
+  try {
+    rawBody = await request.json();
+  } catch {
+    return Response.json({ message: "Invalid JSON body" }, { status: 400 });
+  }
 
-  // ── Auth + credit check ────────────────────────────────────────────────────
+  const parsedBody = improveRequestSchema.safeParse(rawBody);
+  if (!parsedBody.success) {
+    return Response.json(
+      {
+        message:
+          parsedBody.error.issues[0]?.message ?? "Invalid request payload",
+      },
+      { status: 400 }
+    );
+  }
+
+  const { workspaceId, userRequest } = parsedBody.data;
+
+  // This endpoint runs an agent loop of up to 8 Gemini calls, so it needs rate
+  // limiting at least as much as the generation endpoint.
+  const decision = await aj.protect(
+    new Request(request.url, {
+      method: request.method,
+      headers: request.headers,
+      body: JSON.stringify(rawBody),
+    }),
+    {
+      requested: 1,
+      userId: clerkId,
+      detectPromptInjectionMessage: userRequest,
+    }
+  );
+  if (decision.isDenied()) {
+    return Response.json(
+      { message: decision.reason?.type ?? "Request blocked" },
+      { status: 429 }
+    );
+  }
+
+  // ── Auth + plan gate ───────────────────────────────────────────────────────
 
   const user = await db.user.findUnique({
-    where: { id: userId, clerkId },
-    select: { id: true, credits: true, plan: true },
+    where: { clerkId },
+    select: { id: true, plan: true },
   });
 
   if (!user)
@@ -41,7 +87,24 @@ export async function POST(request: NextRequest) {
   if (user.plan !== "pro")
     return Response.json({ message: "Upgrade required" }, { status: 403 });
 
-  if (user.credits < CREDIT_COST_PER_GENERATION)
+  // Load the files from the database rather than trusting the request body, so a
+  // client cannot overwrite its saved project with arbitrary content.
+  const workspace = await db.workspace.findFirst({
+    where: { id: workspaceId, userId: user.id },
+    select: { fileData: true },
+  });
+
+  if (!workspace)
+    return Response.json({ message: "Workspace not found" }, { status: 404 });
+
+  const fileData = parseFileData(workspace.fileData);
+  if (!fileData)
+    return Response.json(
+      { message: "This project has no files to improve yet." },
+      { status: 400 }
+    );
+
+  if (!(await reserveCredit(user.id)))
     return Response.json({ message: "Insufficient credits" }, { status: 402 });
 
   // ── Build the agent ────────────────────────────────────────────────────────
@@ -58,6 +121,18 @@ export async function POST(request: NextRequest) {
         ...fileData.files,
       };
       let finalSummary = "";
+
+      // The credit is reserved before the agent starts; give it back on failure.
+      let creditSettled = false;
+      const failWith = async (message: string) => {
+        if (!creditSettled) {
+          creditSettled = true;
+          await refundCredit(user.id).catch((err) =>
+            console.error("[improve] refund failed:", err)
+          );
+        }
+        enqueue(sseEvent("error", { message }));
+      };
 
       // ── Tool 1: update_file ──────────────────────────────────────────────
       // The agent calls this once per file it wants to change.
@@ -195,21 +270,13 @@ RULES:
           title: fileData.title,
         };
 
-        await db.$transaction([
-          db.workspace.update({
-            where: { id: workspaceId, userId },
-            data: { fileData: newFileData as never },
-          }),
-          db.user.update({
-            where: { id: userId },
-            data: { credits: { decrement: CREDIT_COST_PER_GENERATION } },
-          }),
-        ]);
-
-        const updatedUser = await db.user.findUnique({
-          where: { id: userId },
-          select: { credits: true },
+        await db.workspace.update({
+          where: { id: workspaceId, userId: user.id },
+          data: { fileData: newFileData as never },
         });
+
+        // The reserved credit is now paid for by a saved improvement.
+        creditSettled = true;
 
         // ── Final done event ──────────────────────────────────────────────
 
@@ -217,17 +284,13 @@ RULES:
           sseEvent("done", {
             fileData: newFileData,
             summary: finalSummary || result.outputText,
-            creditsRemaining:
-              updatedUser?.credits ?? user.credits - CREDIT_COST_PER_GENERATION,
+            creditsRemaining: await getCredits(user.id),
           })
         );
       } catch (err) {
         console.error("[improve] error:", err);
-        enqueue(
-          sseEvent("error", {
-            message:
-              err instanceof Error ? err.message : "Something went wrong.",
-          })
+        await failWith(
+          err instanceof Error ? err.message : "Something went wrong."
         );
       } finally {
         controller.close();
@@ -237,9 +300,10 @@ RULES:
 
   return new Response(stream, {
     headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
     },
   });
 }
