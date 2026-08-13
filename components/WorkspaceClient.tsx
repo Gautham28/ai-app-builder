@@ -10,7 +10,6 @@ import { toast } from "sonner";
 interface WorkspaceClientProps {
     initialPrompt: string | null;
     userCredits: number;
-    userId: string;
     userPlan: string;
     workspace: WorkspaceData | null;
 }
@@ -31,7 +30,7 @@ function parseMessages(raw: unknown): Message[] {
     return raw as FileData;
   }
 
-const WorkspaceClient = ({ initialPrompt, userCredits, workspace, userId, userPlan}: WorkspaceClientProps) => {
+const WorkspaceClient = ({ initialPrompt, userCredits, workspace, userPlan}: WorkspaceClientProps) => {
     const [workspaceId, setWorkspaceId] = useState<string | null>(workspace?.id ?? null,);
     const [messages, setMessages] = useState<Message[]>(
         parseMessages(workspace?.messages),
@@ -351,7 +350,6 @@ const WorkspaceClient = ({ initialPrompt, userCredits, workspace, userId, userPl
                 initialPrompt={initialPrompt}
                 onStop={handleStop}
                 onGenerate={handleGenerate}
-                userId={userId}
                 workspaceId={workspaceId}
                 appTitle={fileData?.title ?? workspace?.title ?? null}
             />
