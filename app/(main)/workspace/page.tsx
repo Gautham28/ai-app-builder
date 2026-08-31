@@ -25,7 +25,6 @@ const WorkspacePage = async ({ searchParams } : WorkspacePageProps) => {
     <WorkspaceClient
         initialPrompt={prompt ?? null}
         userCredits={user.credits}
-        userId={user.id}
         userPlan={user.plan}
         workspace={workspace}
     />

@@ -21,6 +21,7 @@ const HEADER_HEIGHT = 64
 const HeaderNav = ({ credits, plan }: HeaderNavProps) => {
   const pathname = usePathname()
   const isLanding = pathname === "/"
+  const isPreview = pathname === "/preview" || pathname.startsWith("/preview/")
   const [pastHero, setPastHero] = useState(false)
 
   useEffect(() => {
@@ -58,6 +59,8 @@ const HeaderNav = ({ credits, plan }: HeaderNavProps) => {
 
   const transparentNav = isLanding && !pastHero
 
+  if (isPreview) return null
+
   return (
     <header
       className={cn(
@@ -67,7 +70,7 @@ const HeaderNav = ({ credits, plan }: HeaderNavProps) => {
           : "border-b border-[#141414] bg-[#0a0a0a]"
       )}
     >
-      <nav className='mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6'>
+      <nav className='flex h-full w-full items-center justify-between px-4 sm:px-5'>
         <Link href='/' className='flex items-center gap-2'>
           <Image
             src="/logo-short2.svg"

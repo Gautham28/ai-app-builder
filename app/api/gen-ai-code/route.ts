@@ -2,10 +2,10 @@ import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { db } from "@/lib/prisma";
-import { CREDIT_COST_PER_GENERATION } from "@/lib/constants";
 import type { Message, FileData } from "@/types/workspace";
-import { detectPromptInjection } from "@arcjet/next";
 import { aj } from "@/lib/arcjet";
+import { getCredits, refundCredit, reserveCredit } from "@/lib/credits";
+import { aiResponseSchema, generateRequestSchema } from "@/lib/validation";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
@@ -107,47 +107,70 @@ export async function POST(request: NextRequest) {
     return Response.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json();
-  const { workspaceId, userId, messages, fileData } = body as {
-    workspaceId: string | null;
-    userId: string;
-    messages: Message[];
-    fileData: FileData | null;
-  };
-
-  if (!messages?.length) {
-    return Response.json({ message: "No messages provided" }, { status: 400 });
+  let rawBody: unknown;
+  try {
+    rawBody = await request.json();
+  } catch {
+    return Response.json({ message: "Invalid JSON body" }, { status: 400 });
   }
+
+  const parsedBody = generateRequestSchema.safeParse(rawBody);
+  if (!parsedBody.success) {
+    return Response.json(
+      {
+        message:
+          parsedBody.error.issues[0]?.message ?? "Invalid request payload",
+      },
+      { status: 400 }
+    );
+  }
+
+  const { workspaceId, messages, fileData } = parsedBody.data;
 
   const arcjetReq = new Request(request.url, {
     method: request.method,
     headers: request.headers,
-    body: JSON.stringify(body),
+    body: JSON.stringify(rawBody),
   });
 
-  const lastUserMessage = 
+  const lastUserMessage =
     [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
-    const decision = await aj.protect(arcjetReq, {
-      requested: 1,
-      userId: clerkId,
-      detectPromptInjectionMessage: lastUserMessage,
-    });
-    if (decision.isDenied()){
-      return Response.json(
-        { message: decision.reason?.type ?? "Request blocked"},
-        { status: 429 },
-      );
-    }
-    
 
+  const decision = await aj.protect(arcjetReq, {
+    requested: 1,
+    userId: clerkId,
+    detectPromptInjectionMessage: lastUserMessage,
+  });
+  if (decision.isDenied()) {
+    return Response.json(
+      { message: decision.reason?.type ?? "Request blocked" },
+      { status: 429 }
+    );
+  }
+
+  // Identity comes from the Clerk session only. A client-supplied user id would
+  // let a caller charge someone else's credits and overwrite their workspaces.
   const user = await db.user.findUnique({
     where: { clerkId },
-    select: { id: true, credits: true },
+    select: { id: true },
   });
 
   if (!user)
     return Response.json({ message: "User not found" }, { status: 404 });
-  if (user.credits < CREDIT_COST_PER_GENERATION) {
+
+  // Confirm ownership up front so an unauthorised workspaceId fails loudly
+  // instead of silently matching nothing during the update.
+  if (workspaceId) {
+    const owned = await db.workspace.findFirst({
+      where: { id: workspaceId, userId: user.id },
+      select: { id: true },
+    });
+    if (!owned) {
+      return Response.json({ message: "Workspace not found" }, { status: 404 });
+    }
+  }
+
+  if (!(await reserveCredit(user.id))) {
     return Response.json({ message: "Insufficient credits" }, { status: 402 });
   }
 
@@ -158,8 +181,21 @@ export async function POST(request: NextRequest) {
       const enqueue = (chunk: string) =>
         controller.enqueue(encoder.encode(chunk));
 
+      // The credit is already reserved. Every exit path that does not produce a
+      // saved workspace has to give it back, and exactly once.
+      let creditSettled = false;
+      const failWith = async (message: string) => {
+        if (!creditSettled) {
+          creditSettled = true;
+          await refundCredit(user.id).catch((err) =>
+            console.error("[gen-ai-code] refund failed:", err)
+          );
+        }
+        enqueue(sseEvent("error", { message }));
+      };
+
       try {
-        const contents = buildContents(messages, fileData);
+        const contents = buildContents(messages, fileData ?? null);
 
         const geminiStream = await ai.models.generateContentStream({
           model: "gemini-3.5-flash",
@@ -198,22 +234,21 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        let parsed: {
-          assistantMessage: string;
-          title?: string;
-          files: Record<string, { code: string }>;
-          dependencies: Record<string, string>;
-        };
-
+        let rawParsed: unknown;
         try {
-          parsed = JSON.parse(accumulated);
+          rawParsed = JSON.parse(accumulated);
         } catch {
-          enqueue(
-            sseEvent("error", {
-              message: "AI returned invalid JSON. Please try again.",
-            })
+          await failWith("AI returned invalid JSON. Please try again.");
+          return;
+        }
+
+        const aiResult = aiResponseSchema.safeParse(rawParsed);
+        if (!aiResult.success) {
+          console.error(
+            "[gen-ai-code] unexpected AI shape:",
+            aiResult.error.issues
           );
-          controller.close();
+          await failWith("AI returned an unexpected response. Please try again.");
           return;
         }
 
@@ -222,20 +257,10 @@ export async function POST(request: NextRequest) {
           title: aiTitle,
           files,
           dependencies,
-        } = parsed;
-
-        if (!files || typeof files !== "object") {
-          enqueue(
-            sseEvent("error", {
-              message: "AI response missing files. Please try again.",
-            })
-          );
-          controller.close();
-          return;
-        }
+        } = aiResult.data;
 
         enqueue(sseEvent("status", { message: "Validating packages…" }));
-        const validatedDeps = await validateDependencies(dependencies ?? {});
+        const validatedDeps = await validateDependencies(dependencies);
         const newFileData: FileData = {
           files,
           dependencies: validatedDeps,
@@ -250,50 +275,38 @@ export async function POST(request: NextRequest) {
           { role: "assistant", content: assistantMessage },
         ];
 
-        const [workspace] = await db.$transaction([
-          workspaceId
-            ? db.workspace.update({
-                where: { id: workspaceId, userId },
-                data: {
-                  messages: updatedMessages as never,
-                  fileData: newFileData as never,
-                },
-              })
-            : db.workspace.create({
-                data: {
-                  userId,
-                  title: aiTitle ?? lastUserMessage.content.slice(0, 80),
-                  messages: updatedMessages as never,
-                  fileData: newFileData as never,
-                },
-              }),
-          db.user.update({
-            where: { id: userId },
-            data: { credits: { decrement: CREDIT_COST_PER_GENERATION } },
-          }),
-        ]);
+        const workspace = workspaceId
+          ? await db.workspace.update({
+              where: { id: workspaceId, userId: user.id },
+              data: {
+                title: aiTitle ?? undefined,
+                messages: updatedMessages as never,
+                fileData: newFileData as never,
+              },
+            })
+          : await db.workspace.create({
+              data: {
+                userId: user.id,
+                title: aiTitle ?? lastUserMessage.content.slice(0, 80),
+                messages: updatedMessages as never,
+                fileData: newFileData as never,
+              },
+            });
 
-        const updatedUser = await db.user.findUnique({
-          where: { id: userId },
-          select: { credits: true },
-        });
+        // The reserved credit is now paid for by a saved workspace.
+        creditSettled = true;
 
         enqueue(
           sseEvent("done", {
             workspaceId: workspace.id,
             assistantMessage,
             fileData: newFileData,
-            creditsRemaining:
-              updatedUser?.credits ?? user.credits - CREDIT_COST_PER_GENERATION,
+            creditsRemaining: await getCredits(user.id),
           })
         );
       } catch (err) {
         console.error("[gen-ai-code] stream error:", err);
-        enqueue(
-          sseEvent("error", {
-            message: "Something went wrong. Please try again.",
-          })
-        );
+        await failWith("Something went wrong. Please try again.");
       } finally {
         controller.close();
       }
@@ -302,9 +315,11 @@ export async function POST(request: NextRequest) {
 
   return new Response(stream, {
     headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
+      // Stops intermediate proxies buffering the stream into one final dump.
+      "X-Accel-Buffering": "no",
     },
   });
 }

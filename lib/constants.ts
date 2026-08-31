@@ -19,6 +19,9 @@ export const PLANS = {
   export const CREDIT_COST_PER_GENERATION = 1;
   
   export const MIN_CREDITS_TO_GENERATE = 1;
+
+  /** Shared by the upload route and the chat panel's pre-flight check. */
+  export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
   
   export const PRICING_PLANS = [
     {

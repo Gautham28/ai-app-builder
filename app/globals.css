@@ -144,3 +144,65 @@
   }
 }
 
+/* Preview frame: force full-height fill; Sandpack defaults to 300px / content height */
+.preview-frame {
+  --sp-layout-height: 100%;
+}
+
+.preview-frame .sp-wrapper {
+  display: flex !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  flex-direction: column !important;
+}
+
+.preview-frame .sp-layout {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+.preview-frame .sp-layout > [data-slot="tabs-content"] {
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  width: 100% !important;
+}
+
+.preview-frame .sp-stack,
+.preview-frame .sp-preview,
+.preview-frame .sp-layout > .sp-stack {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  width: 100% !important;
+}
+
+.preview-frame .sp-preview-container {
+  position: relative;
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  background: #fff;
+}
+
+.preview-frame .sp-preview-iframe {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  border: none;
+}
+
+.preview-frame .sp-preview-actions {
+  display: none !important;
+}
+

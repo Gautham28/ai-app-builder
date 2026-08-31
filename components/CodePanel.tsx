@@ -12,11 +12,12 @@ import {
   } from "@codesandbox/sandpack-react";
   import {dracula} from "@codesandbox/sandpack-themes";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { AlertTriangle, ArrowUp, Bot, Code2, Download, Eye, Loader2, Wand2 } from "lucide-react";
+import { AlertTriangle, ArrowUp, Bot, Code2, Download, ExternalLink, Eye, Loader2, RefreshCw, Wand2 } from "lucide-react";
 import { RingLoader } from "react-spinners";
 import { Button } from "./ui/button";
 import PricingModal from "./PricingModal";
 import JSZip from "jszip";
+import { BASE_DEPENDENCIES, storePreviewPayload } from "@/lib/sandpack";
 
 const PLACEHOLDER_FILES = {
     "/App.js": {
@@ -40,30 +41,6 @@ const PLACEHOLDER_FILES = {
     },
   };
 
-  
-  const BASE_DEPENDENCIES: Record<string, string> = {
-    "react-is": "latest",
-    "react-router-dom": "latest",
-    "lucide-react": "latest",
-    recharts: "latest",
-    "date-fns": "latest",
-    "framer-motion": "latest",
-    "react-hook-form": "latest",
-    "@hookform/resolvers": "latest",
-    zod: "latest",
-    "@radix-ui/react-dialog": "latest",
-    "@radix-ui/react-dropdown-menu": "latest",
-    "@radix-ui/react-tabs": "latest",
-    "@radix-ui/react-tooltip": "latest",
-    "@radix-ui/react-accordion": "latest",
-    "@radix-ui/react-select": "latest",
-    axios: "latest",
-    clsx: "latest",
-    "class-variance-authority": "latest",
-    "tailwind-merge": "latest",
-  };
-
-
   type ActiveTab = "preview" | "code";
 
   interface CodePanelProps {
@@ -76,7 +53,7 @@ const PLACEHOLDER_FILES = {
     isProUser: boolean;
     appTitle: string | null;
     onImprove: (userRequest: string) => Promise<void>;
-
+    workspaceId: string | null;
   }
 
   function SandpackInner({
@@ -90,6 +67,7 @@ const PLACEHOLDER_FILES = {
     isProUser,
     appTitle,
     onImprove,
+    workspaceId,
   } : {
     fileData: FileData | null;
     isGenerating: boolean;
@@ -101,15 +79,24 @@ const PLACEHOLDER_FILES = {
     isProUser: boolean;
     appTitle: string | null;
     onImprove: (userRequest: string) => Promise<void>;
+    workspaceId: string | null;
   }) {
-    const { sandpack,listen } = useSandpack();
+    const { sandpack, listen, dispatch } = useSandpack();
     const [previewError, setPreviewError] = useState<string | null>(null);
     const unsubscribeRef = useRef<(() => void) | null>(null);
 
     const[isExporting, setIsExporting] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const [improveInput, setImproveInput] = useState("");
     const [showImproveInput, setShowImproveInput] = useState(false);
+
+    const handleRefreshPreview = () => {
+      if (isRefreshing) return;
+      setIsRefreshing(true);
+      dispatch({ type: "refresh" });
+      window.setTimeout(() => setIsRefreshing(false), 600);
+    };
 
     const handleExportZip = async () => {
       if (isExporting) return;
@@ -219,6 +206,19 @@ const PLACEHOLDER_FILES = {
       await onImprove(trimmed);
     };
 
+    const handleOpenInNewTab = () => {
+      if (!fileData) return;
+      try {
+        storePreviewPayload(fileData, workspaceId);
+      } catch {
+        // sessionStorage may be unavailable; still open the tab
+      }
+      const url = workspaceId
+        ? `/preview?id=${encodeURIComponent(workspaceId)}`
+        : "/preview";
+      window.open(url, "_blank", "noopener,noreferrer");
+    };
+
     useEffect(() => {
       unsubscribeRef.current = listen((msg) => {
         if (
@@ -270,10 +270,10 @@ const PLACEHOLDER_FILES = {
         <Tabs 
             value={activeTab}
             onValueChange={(v) => setActiveTab(v as ActiveTab)}
-            className="flex h-full flex-col gap-0"
+            className="flex h-full min-h-0 flex-col gap-0"
         >
 
-  <div className="flex items-center justify-between border-b border-white/6 px-2">
+  <div className="flex shrink-0 items-center justify-between px-3 py-1.5">
     <TabsList
         variant="line"
         className="h-auto gap-0 rounded-none bg-transparent p-0"
@@ -288,6 +288,7 @@ const PLACEHOLDER_FILES = {
           </TabsTrigger>
     </TabsList>
 
+      <div className="flex items-center gap-1">
       {isProUser?(showImproveInput?(
         <div className="flex items-center gap-1.5">
                   <input
@@ -337,6 +338,17 @@ const PLACEHOLDER_FILES = {
 
 <Button
             variant="ghost"
+            size="sm"
+            onClick={handleOpenInNewTab}
+            disabled={!fileData || isGenerating || isImproving}
+            className="h-7 gap-1.5 text-xs text-white/40 hover:text-white/70"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            New tab
+          </Button>
+
+<Button
+            variant="ghost"
             onClick={handleExportZip}
             disabled={isExporting || !fileData}
           >
@@ -347,11 +359,12 @@ const PLACEHOLDER_FILES = {
             )}
             Download
           </Button>
+      </div>
   </div>
 
-  <div className="relative flex-1 overflow-hidden h-full">
+  <div className="relative min-h-0 flex-1 overflow-hidden">
         {(isGenerating || isImproving) && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-6 bg-[#0a0a0a]/85 backdrop-blur-sm">
+          <div className="absolute inset-3 z-20 flex flex-col items-center justify-center gap-6 rounded-2xl bg-[#0a0a0a]/85 backdrop-blur-sm">
             <RingLoader color="#60a5fa" size={64} speedMultiplier={0.8} />
             <div className="flex flex-col items-center gap-1.5">
               <p className="text-sm font-medium text-white/60">
@@ -366,10 +379,11 @@ const PLACEHOLDER_FILES = {
           </div>
         )}
 
-
+        <div className="preview-frame absolute inset-3 overflow-hidden rounded-2xl border border-white/10 bg-white shadow-[0_16px_48px_rgba(0,0,0,0.45)]">
   <SandpackLayout
+          className="h-full!"
           style={{
-            height: "100vh",
+            height: "100%",
             border: "none",
             borderRadius: 0,
             background: "transparent",
@@ -378,29 +392,34 @@ const PLACEHOLDER_FILES = {
             <TabsContent 
             value="preview"
             keepMounted
-            className="mt-0 h-full w-full"
+            className="mt-0 h-full w-full min-h-0"
             >
                 <SandpackPreview
-                    style={{ height: "89%" }}
+                    className="h-full"
+                    style={{ height: "100%", width: "100%", flex: 1 }}
+                    showNavigator={false}
                     showOpenInCodeSandbox={false}
+                    showRefreshButton={false}
+                    showOpenNewtab={false}
+                    showRestartButton={false}
                 />
             </TabsContent>
 
             <TabsContent 
             value="code"
             keepMounted
-            className="mt-0 flex h-full w-full"
+            className="mt-0 flex h-full min-h-0 w-full bg-[#0d1117]"
             >
             <SandpackFileExplorer
                 style={{
-                    height: "90%",
+                    height: "100%",
                     width: "180px",
                     borderRight: "0.5px solid rgba(255,255,255,0.08)",
                 }}
             />
 
             <SandpackCodeEditor
-                style={{ height: "90%", flex: 1}}
+                style={{ height: "100%", flex: 1}}
                 showTabs
                 showLineNumbers
                 showInlineErrors
@@ -411,8 +430,23 @@ const PLACEHOLDER_FILES = {
             </TabsContent>
         </SandpackLayout>
 
+        {activeTab === "preview" && fileData && !isGenerating && !isImproving && (
+          <button
+            type="button"
+            onClick={handleRefreshPreview}
+            title="Refresh preview"
+            aria-label="Refresh preview"
+            className="absolute bottom-3 right-3 z-30 flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white text-black/70 shadow-md transition-colors hover:bg-black/[0.03] hover:text-black"
+          >
+            <RefreshCw
+              className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`}
+            />
+          </button>
+        )}
+        </div>
+
         {previewError && !isGenerating && !isImproving && (
-          <div className="absolute inset-x-0 bottom-0 z-20 border-t border-red-500/20 bg-red-950/99 p-4 pb-6">
+          <div className="absolute inset-x-3 bottom-3 z-20 rounded-b-2xl border-t border-red-500/20 bg-red-950/99 p-4 pb-6">
             <div className="flex items-center gap-2.5">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-400/70" />
               <div className="min-w-0 flex-1">
@@ -450,6 +484,7 @@ const PLACEHOLDER_FILES = {
     isProUser,
     appTitle,
     onImprove,
+    workspaceId,
   }: CodePanelProps){
         const [activeTab, setActiveTab] = useState<ActiveTab>("preview");
 
@@ -463,13 +498,15 @@ const PLACEHOLDER_FILES = {
         const filePathKey = Object.keys(files).sort().join("|");
 
         return(
-           <div className="flex flex-1 flex-col overflow-hidden">
+           <div className="flex min-w-0 flex-1 flex-col overflow-hidden border-l border-white/6 bg-[#0a0a0a]">
             <SandpackProvider 
             key={filePathKey}
             template="react"
             theme={dracula}
             files={files}
             customSetup={{dependencies}}
+            className="flex h-full min-h-0 flex-col"
+            style={{ height: "100%" }}
             options={{
                 externalResources: ["https://cdn.tailwindcss.com"],
                 recompileMode: "delayed",
@@ -487,6 +524,7 @@ const PLACEHOLDER_FILES = {
                isProUser={isProUser}
                appTitle={appTitle}
                onImprove={onImprove}
+               workspaceId={workspaceId}
                /> 
             </SandpackProvider>
            </div> 

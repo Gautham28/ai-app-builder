@@ -1,6 +1,7 @@
 "use client";
 
 import { Message, StatusStep } from "@/types/workspace";
+import { MAX_IMAGE_BYTES } from "@/lib/constants";
 import React, { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { BlueTitle } from "./reusables";
 import PricingModal from "./PricingModal";
@@ -10,7 +11,6 @@ import { ArrowUp, Check, Loader2, Paperclip, Sparkles, Square, Wand2, X } from "
 import { Button } from "./ui/button";
 import { useUser } from "@clerk/nextjs";
 import ReactMarkdown from "react-markdown";
-import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
 
 interface ChatPanelProps {
@@ -21,16 +21,10 @@ interface ChatPanelProps {
   credits: number;
   initialPrompt: string | null;
   onGenerate: (prompt: string, imageUrl?: string) => Promise<void>;
-  userId: string;
   workspaceId: string | null;
   appTitle: string | null;
   onStop: () => void;
 }
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-);
 
 const ChatPanel = ({
   messages,
@@ -40,7 +34,6 @@ const ChatPanel = ({
   credits,
   initialPrompt,
   onGenerate,
-  userId,
   workspaceId,
   onStop,
   appTitle,
@@ -116,21 +109,33 @@ const ChatPanel = ({
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !file.type.startsWith("image/")) return;
+    if (!file) return;
+
+    // Server-side checks are authoritative; this only avoids a pointless round
+    // trip and gives immediate feedback.
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file.");
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      toast.error("Images must be 5 MB or smaller.");
+      return;
+    }
+
     setIsUploading(true);
     try {
-      const ext = file.name.split(".").pop();
-      const path = `${userId}/${workspaceId ?? "new"}/${Date.now()}.${ext}`;
-      const { error } = await supabase.storage
-        .from("workspace-images")
-        .upload(path, file, { upsert: true });
+      const body = new FormData();
+      body.append("file", file);
+      if (workspaceId) body.append("workspaceId", workspaceId);
 
-      if (error) throw error;
+      const res = await fetch("/api/upload", { method: "POST", body });
+      const payload = await res.json().catch(() => null);
 
-      const { data } = supabase.storage
-        .from("workspace-images")
-        .getPublicUrl(path);
-      setPendingImageUrl(data.publicUrl);
+      if (!res.ok) {
+        throw new Error(payload?.message ?? "Upload failed");
+      }
+
+      setPendingImageUrl(payload.url as string);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       toast.error(message);
