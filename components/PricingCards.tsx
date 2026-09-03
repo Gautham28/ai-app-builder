@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { Check, Sparkles, Zap } from "lucide-react";
+import React, { useState } from "react";
+import { Check, Loader2, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PRICING_PLANS } from "@/lib/constants";
 import { SignInButton, useUser } from "@clerk/nextjs";
@@ -21,8 +21,9 @@ export default function PricingCards({
   className,
 }: PricingCardsProps) {
   const { isSignedIn } = useUser();
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
-  const handlePlanClick = (planKey: string) => {
+  const handlePlanClick = async (planKey: string) => {
     if (onSelectPlan) {
       onSelectPlan(planKey);
       return;
@@ -33,10 +34,28 @@ export default function PricingCards({
       return;
     }
 
-    // Placeholder for Dodo Payments / Lemon Squeezy integration
-    toast.success(
-      `Selected ${planKey.toUpperCase()} plan! Payment gateway integration coming soon.`
-    );
+    try {
+      setLoadingPlan(planKey);
+      const res = await fetch("/api/checkout/dodo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planKey }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to initiate checkout");
+      }
+
+      if (data.checkoutUrl) {
+        window.location.assign(data.checkoutUrl);
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      toast.error(error instanceof Error ? error.message : "Checkout failed");
+    } finally {
+      setLoadingPlan(null);
+    }
   };
 
   return (
@@ -131,7 +150,7 @@ export default function PricingCards({
               </SignInButton>
             ) : (
               <Button
-                disabled={isCurrent}
+                disabled={isCurrent || loadingPlan !== null}
                 onClick={() => handlePlanClick(plan.key)}
                 className={cn(
                   "w-full h-10 rounded-xl font-semibold text-xs cursor-pointer transition-all active:scale-[0.98]",
@@ -142,11 +161,18 @@ export default function PricingCards({
                     : "bg-white/10 hover:bg-white/20 text-white"
                 )}
               >
-                {isCurrent
-                  ? "Current Plan"
-                  : plan.price === 0
-                  ? "Free Plan"
-                  : `Upgrade to ${plan.label}`}
+                {loadingPlan === plan.key ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                    Redirecting…
+                  </>
+                ) : isCurrent ? (
+                  "Current Plan"
+                ) : plan.price === 0 ? (
+                  "Free Plan"
+                ) : (
+                  `Upgrade to ${plan.label}`
+                )}
               </Button>
             )}
           </div>
