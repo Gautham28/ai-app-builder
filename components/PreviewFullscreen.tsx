@@ -71,13 +71,23 @@ export default function PreviewFullscreen({
   workspaceId,
   appTitle,
 }: PreviewFullscreenProps) {
-  const [fileData, setFileData] = useState<FileData | null>(initialFileData);
+  const [fileData, setFileData] = useState<FileData | null>(() => {
+    if (initialFileData) return initialFileData;
+    if (typeof window !== "undefined") {
+      return readPreviewPayload(workspaceId)?.fileData ?? null;
+    }
+    return null;
+  });
 
   useEffect(() => {
-    const fromStorage = readPreviewPayload(workspaceId);
-    if (fromStorage?.fileData) {
-      setFileData(fromStorage.fileData);
-    }
+    const handleStorage = () => {
+      const fromStorage = readPreviewPayload(workspaceId);
+      if (fromStorage?.fileData) {
+        setFileData(fromStorage.fileData);
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
   }, [workspaceId]);
 
   useEffect(() => {

@@ -25,10 +25,7 @@ const HeaderNav = ({ credits, plan }: HeaderNavProps) => {
   const [pastHero, setPastHero] = useState(false)
 
   useEffect(() => {
-    if (!isLanding) {
-      setPastHero(false)
-      return
-    }
+    if (!isLanding) return;
 
     const hero = document.getElementById("hero")
     if (!hero) return
