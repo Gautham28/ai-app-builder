@@ -1,7 +1,8 @@
 "use client"
 import { BlueTitle, GrayTitle, SectionHeading, SectionLabel } from "@/components/reusables";
 import { Button } from "@/components/ui/button";
-import { PricingTable, SignInButton, useAuth } from "@clerk/nextjs";
+import { SignInButton, useAuth } from "@clerk/nextjs";
+import PricingCards from "@/components/PricingCards";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils"
@@ -324,17 +325,7 @@ export default function Home() {
         </div>
 
         <div className="mx-auto max-w-5xl">
-          <PricingTable
-            checkoutProps={{
-              appearance: {
-                elements: {
-                  drawerRoot: {
-                    zIndex: 2000,
-                  }
-                }
-              }
-            }}
-        />
+          <PricingCards />
         </div>
       </section>
 
