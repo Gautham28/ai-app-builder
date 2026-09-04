@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
 import { db } from "@/lib/prisma";
+import { checkUser } from "@/lib/checkUser";
 import { ajUpload } from "@/lib/arcjet";
 import { MAX_IMAGE_BYTES } from "@/lib/constants";
 import {
@@ -32,10 +33,19 @@ export async function POST(request: NextRequest) {
     return Response.json({ message: "Image is too large" }, { status: 413 });
   }
 
-  const user = await db.user.findUnique({
+  let user = await db.user.findUnique({
     where: { clerkId },
     select: { id: true },
   });
+
+  if (!user) {
+    await checkUser();
+    user = await db.user.findUnique({
+      where: { clerkId },
+      select: { id: true },
+    });
+  }
+
   if (!user)
     return Response.json({ message: "User not found" }, { status: 404 });
 

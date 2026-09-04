@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
+import { checkUser } from "@/lib/checkUser";
 import { db } from "@/lib/prisma";
 import { getDodoClient } from "@/lib/dodo";
 import { PRICING_PLANS } from "@/lib/constants";
@@ -10,10 +11,18 @@ export async function POST(request: NextRequest) {
     return Response.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const user = await db.user.findUnique({
+  let user = await db.user.findUnique({
     where: { clerkId },
     select: { id: true, email: true, name: true, clerkId: true },
   });
+
+  if (!user) {
+    await checkUser();
+    user = await db.user.findUnique({
+      where: { clerkId },
+      select: { id: true, email: true, name: true, clerkId: true },
+    });
+  }
 
   if (!user) {
     return Response.json({ message: "User not found" }, { status: 404 });
