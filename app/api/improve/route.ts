@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 import { Agent, createTool } from "@cline/sdk";
 import { z } from "zod";
 import { db } from "@/lib/prisma";
+import { checkUser } from "@/lib/checkUser";
 import type { FileData } from "@/types/workspace";
 import { aj } from "@/lib/arcjet";
 import { getCredits, refundCredit, reserveCredit } from "@/lib/credits";
@@ -75,10 +76,18 @@ export async function POST(request: NextRequest) {
 
   // ── Auth + plan gate ───────────────────────────────────────────────────────
 
-  const user = await db.user.findUnique({
+  let user = await db.user.findUnique({
     where: { clerkId },
     select: { id: true, plan: true },
   });
+
+  if (!user) {
+    await checkUser();
+    user = await db.user.findUnique({
+      where: { clerkId },
+      select: { id: true, plan: true },
+    });
+  }
 
   if (!user)
     return Response.json({ message: "User not found" }, { status: 404 });

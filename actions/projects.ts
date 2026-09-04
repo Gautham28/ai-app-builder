@@ -3,6 +3,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { checkUser } from "@/lib/checkUser";
 import { db } from "@/lib/prisma";
 import type { ProjectSummary } from "@/types/project";
 
@@ -14,10 +15,19 @@ export async function getUserProjects(): Promise<ProjectSummary[]> {
   const { userId: clerkId } = await auth();
   if (!clerkId) redirect("/");
 
-  const user = await db.user.findUnique({
+  let user = await db.user.findUnique({
     where: { clerkId },
     select: { id: true },
   });
+
+  if (!user) {
+    await checkUser();
+    user = await db.user.findUnique({
+      where: { clerkId },
+      select: { id: true },
+    });
+  }
+
   if (!user) redirect("/");
 
   const workspaces = await db.workspace.findMany({
