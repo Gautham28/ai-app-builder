@@ -4,12 +4,13 @@ import Image from 'next/image'
 import React, { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { ArrowRight, Zap } from 'lucide-react'
-import { Show, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs'
+import { Show, SignInButton, SignUpButton, UserButton, useAuth } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
 import PricingModal from './PricingModal'
 import { PLANS } from '@/lib/constants'
 import { Plan } from '@/types/plans'
 import { cn } from '@/lib/utils'
+import { getUserCredits } from '@/actions/user'
 
 interface HeaderNavProps {
   credits: number | null
@@ -18,11 +19,43 @@ interface HeaderNavProps {
 
 const HEADER_HEIGHT = 64
 
-const HeaderNav = ({ credits, plan }: HeaderNavProps) => {
+const HeaderNav = ({ credits: initialCredits, plan: initialPlan }: HeaderNavProps) => {
   const pathname = usePathname()
+  const { isSignedIn } = useAuth()
+  const [credits, setCredits] = useState<number | null>(initialCredits)
+  const [plan, setPlan] = useState<Plan | null>(initialPlan)
   const isLanding = pathname === "/"
   const isPreview = pathname === "/preview" || pathname.startsWith("/preview/")
   const [pastHero, setPastHero] = useState(false)
+
+  // Sync credits when initial props change
+  useEffect(() => {
+    if (initialCredits !== null) setCredits(initialCredits)
+    if (initialPlan !== null) setPlan(initialPlan)
+  }, [initialCredits, initialPlan])
+
+  // Dynamically fetch credits on the client when signed in
+  useEffect(() => {
+    if (!isSignedIn) {
+      setCredits(null)
+      setPlan(null)
+      return
+    }
+
+    let isMounted = true
+    getUserCredits().then((data) => {
+      if (isMounted && data) {
+        setCredits(data.credits)
+        setPlan(data.plan)
+      }
+    }).catch((err) => {
+      console.error("[HeaderNav] failed to fetch credits:", err)
+    })
+
+    return () => {
+      isMounted = false
+    }
+  }, [isSignedIn, pathname])
 
   useEffect(() => {
     if (!isLanding) return;
@@ -92,9 +125,9 @@ const HeaderNav = ({ credits, plan }: HeaderNavProps) => {
 
             {credits !== null && plan && (
               <PricingModal>
-                <span className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 text-xs text-white/70">
+                <span className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 text-xs text-white/70 cursor-pointer">
                   <Zap className="h-3 w-3 fill-white/70" />
-                  {credits} / {PLANS[plan].credits} credits
+                  {credits} / {PLANS[plan]?.credits ?? 10} credits
                 </span>
               </PricingModal>
             )}
